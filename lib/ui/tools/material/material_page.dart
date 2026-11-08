@@ -6,6 +6,7 @@ import '../../../state/app_appearance.dart';
 import '../../../theme/app_theme.dart';
 import '../tool_draft.dart';
 import '../widgets/tool_field.dart';
+import '../widgets/tool_result_card.dart';
 import '../widgets/tool_select.dart';
 import 'material.dart';
 import 'material_lang.dart';
@@ -224,7 +225,7 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
           ),
         ),
         const SizedBox(height: 12),
-        _ResultCard(
+        ToolResultCard(
           key: const Key('material-brick-result'),
           title: _s.brickResult,
           value: count,
@@ -313,7 +314,7 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
           ),
         ),
         const SizedBox(height: 12),
-        _ResultCard(
+        ToolResultCard(
           key: const Key('material-concrete-result'),
           title: _s.concreteResult,
           value: result,
@@ -368,7 +369,7 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
           ),
         ),
         const SizedBox(height: 12),
-        _ResultCard(
+        ToolResultCard(
           key: const Key('material-cement-result'),
           title: _s.cementResult,
           value: result,
@@ -411,7 +412,7 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
           ),
         ),
         const SizedBox(height: 12),
-        _ResultCard(
+        ToolResultCard(
           key: const Key('material-sand-result'),
           title: _s.sandResult,
           value: result,
@@ -458,60 +459,4 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
 String _trimZero(double value) {
   final text = value.toStringAsFixed(3);
   return text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
-}
-
-/// 结果卡：大号数值 + 单位，下面一行当前公式。
-class _ResultCard extends StatelessWidget {
-  const _ResultCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.unit,
-    required this.formula,
-  });
-
-  final String title;
-  final double? value;
-  final String unit;
-
-  /// 当前算式；结果为「—」时传 null。
-  final String? formula;
-
-  @override
-  Widget build(BuildContext context) {
-    return ToolSection(
-      title: title,
-      icon: Icons.calculate_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            value == null
-                ? '—'
-                : '${formatNumber(value!, significantDigits: 10)} $unit',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 24,
-              height: 1.15,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          if (formula != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              formula!,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }

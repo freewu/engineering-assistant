@@ -7,6 +7,8 @@ import 'package:engineering_assistant/services/settings_store.dart';
 import 'package:engineering_assistant/state/settings_controller.dart';
 import 'package:engineering_assistant/theme/app_theme.dart';
 import 'package:engineering_assistant/ui/tools/area/area.dart';
+import 'package:engineering_assistant/ui/tools/building/building_area.dart';
+import 'package:engineering_assistant/ui/tools/building/building_area_strings.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
@@ -863,6 +865,120 @@ void main() {
     });
   });
 
+  group('建筑面积计算', () {
+    test('单层建筑：L × B，结构高度不足 2.2 m 只算一半', () {
+      expect(singleStoreyArea(30, 15, 3), 450);
+      expect(singleStoreyArea(30, 15, kFullAreaHeight), 450);
+      expect(singleStoreyArea(30, 15, 2), 225);
+    });
+
+    test('多层建筑：层数 × 每层面积', () {
+      expect(multiStoreyArea(3, 500), 1500);
+      expect(multiStoreyArea(1, 80), 80);
+      expect(multiStoreyArea(0, 80), 0);
+    });
+
+    test('阳台按 1/2 计算，与封闭与否无关', () {
+      expect(balconyArea(10), 5);
+      expect(balconyArea(1.5), closeTo(0.75, 1e-9));
+    });
+
+    test('雨篷：有柱全面积，无柱宽度超过 2.1 m 才算', () {
+      expect(canopyArea(6, width: 3, hasColumns: false), 6);
+      expect(canopyArea(6, width: 2.1, hasColumns: false), 0);
+      expect(canopyArea(6, width: 2, hasColumns: false), 0);
+      expect(canopyArea(6, width: 1, hasColumns: true), 6);
+      expect(kCanopyMinWidth, 2.1);
+    });
+
+    test('门斗：结构层高 ≥ 2.2 m 全面积，不足算 1/2', () {
+      expect(vestibuleArea(4, 2.4), 4);
+      expect(vestibuleArea(4, kFullAreaHeight), 4);
+      expect(vestibuleArea(4, 2), 2);
+    });
+
+    test('车棚按顶盖投影面积 1/2 计算，合计时忽略未填项', () {
+      expect(shedArea(20), 10);
+      expect(totalArea(<double?>[450, null, 5]), 455);
+      expect(totalArea(<double?>[]), 0);
+    });
+
+    test('五种语言的「建筑面积」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kBuildingAreaStrings, language);
+        for (final text in <String>[
+          s.tabSingle,
+          s.tabMulti,
+          s.tabBalcony,
+          s.tabCanopy,
+          s.tabVestibule,
+          s.tabShed,
+          s.length,
+          s.width,
+          s.height,
+          s.floors,
+          s.perFloorArea,
+          s.storeyHeight,
+          s.withColumns,
+          s.withoutColumns,
+          s.squareMeter,
+          s.floorUnit,
+          s.singleSection,
+          s.singleResult,
+          s.singleFormula,
+          s.singleHint,
+          s.multiSection,
+          s.multiResult,
+          s.multiFormula,
+          s.multiHint,
+          s.balconySection,
+          s.balconyArea,
+          s.balconyResult,
+          s.balconyFormula,
+          s.balconyHint,
+          s.canopySection,
+          s.canopyArea,
+          s.canopyWidth,
+          s.canopyResult,
+          s.canopyFormula,
+          s.canopySkipped,
+          s.canopyHint,
+          s.vestibuleSection,
+          s.vestibuleArea,
+          s.vestibuleResult,
+          s.vestibuleFormula,
+          s.vestibuleHint,
+          s.shedSection,
+          s.shedArea,
+          s.shedResult,
+          s.shedFormula,
+          s.shedHint,
+          s.total,
+          s.totalHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 模板里的占位数量要对得上，日语 / 西语最容易漏
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.singleFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.vestibuleFormula).length,
+          3,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.multiFormula).length,
+          3,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -892,12 +1008,13 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 材料用量在所有界面语言下都展示', () {
+    test('八个换算工具 + 材料用量 + 建筑面积在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 9, reason: language.code);
+        expect(visibleTools.length, 10, reason: language.code);
         for (final id in <String>[
           'material',
+          'building_area',
           'distance',
           'area',
           'volume',
@@ -911,7 +1028,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 9);
+      expect(kTools.length, 10);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -925,7 +1042,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 9);
+      expect(kTools.length, 10);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

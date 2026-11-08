@@ -84,6 +84,7 @@ shoot() {
 shoot calculator 1440,900 "index.html"
 shoot tools      1440,900 "index.html?page=tools"
 shoot material   1440,900 "index.html?page=tools&tool=material"
+shoot building_area 1440,900 "index.html?page=tools&tool=building_area"
 shoot distance   1440,900 "index.html?page=tools&tool=distance"
 shoot area       1440,900 "index.html?page=tools&tool=area"
 shoot weight     1440,900 "index.html?page=tools&tool=weight"
