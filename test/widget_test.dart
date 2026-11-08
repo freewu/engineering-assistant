@@ -156,8 +156,9 @@ void main() {
     // 工具卡片配色同样按当前主题取
     await tester.tap(find.text('工具').last);
     await tester.pumpAndSettle();
-    expect(kTools.first.color, kLightPalette.tertiary);
-    expect(kTools.first.color, isNot(kDarkPalette.tertiary));
+    final distance = toolById('distance')!;
+    expect(distance.color, kLightPalette.tertiary);
+    expect(distance.color, isNot(kDarkPalette.tertiary));
   });
 
   testWidgets('设置页：温度默认单位改成华氏度后，温度换算页按 ℉ 打开', (tester) async {
@@ -301,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('8 個のアプリ'), findsOneWidget);
+    expect(find.text('9 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1089,6 +1090,100 @@ void main() {
     );
     // 结果也确实按英尺算（5280 ft = 1 英里）
     expect(find.text('1'), findsWidgets);
+  });
+
+  testWidgets('材料用量：四个 tab 各算各的，重进后数值与 tab 都还在', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final settings = SettingsController(store: _MemoryStore());
+    await tester.pumpWidget(
+      EngineeringAssistantApp(
+        settings: settings,
+        initialTab: 1,
+        initialTool: 'material',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 四个 tab
+    for (final label in <String>['砖块', '混凝土', '水泥', '砂子']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    // 砖块：默认 1 m³ 标准红砖 = 512 块，下面是三种墙厚的每平方米校核
+    expect(find.text('512 块'), findsOneWidget);
+    expect(find.text('砖数 = 1 m³ × 512 = 512 块'), findsOneWidget);
+    expect(find.text('12 墙（120 mm）'), findsOneWidget);
+    expect(find.text('128 块/㎡'), findsOneWidget);
+    expect(find.text('192 块/㎡'), findsOneWidget);
+
+    // 填 150 m³ = 76,800 块
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const Key('material-bricks')),
+        matching: find.byType(TextField),
+      ),
+      '150',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('76800 块'), findsOneWidget);
+
+    // 混凝土：1 ㎡ × 0.1 m = 0.1 m³
+    await tester.tap(find.widgetWithText(Tab, '混凝土'));
+    await tester.pumpAndSettle();
+    expect(find.text('0.1 m³'), findsOneWidget);
+    expect(find.text('混凝土 = 1 ㎡ × 0.1 m = 0.1 m³'), findsOneWidget);
+
+    // 水泥：1 ㎡ × 0.05 = 0.05 吨，单耗换成 0.03 后重算
+    await tester.tap(find.widgetWithText(Tab, '水泥'));
+    await tester.pumpAndSettle();
+    expect(find.text('0.05 吨'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('material-cement-rate')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('0.03 吨/㎡').last);
+    await tester.pumpAndSettle();
+    expect(find.text('0.03 吨'), findsOneWidget);
+
+    // 砂子：1 ㎡ × 0.05 = 0.05 m³
+    await tester.tap(find.widgetWithText(Tab, '砂子'));
+    await tester.pumpAndSettle();
+    expect(find.text('0.05 m³'), findsOneWidget);
+    expect(find.text('砂子 = 1 ㎡ × 0.05 = 0.05 m³'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // 退出再进来：停在砂子 tab，填过的墙体体积也还在
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('材料用量'));
+    await tester.pumpAndSettle();
+    expect(find.text('砂子 = 1 ㎡ × 0.05 = 0.05 m³'), findsOneWidget);
+    await tester.tap(find.widgetWithText(Tab, '砖块'));
+    await tester.pumpAndSettle();
+    expect(find.text('76800 块'), findsOneWidget);
+
+    // 草稿是防抖写盘的，等这个 400 ms 的定时器落地，免得测试结束时还挂着
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('材料用量：手机尺寸下四个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'material'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['混凝土', '水泥', '砂子', '砖块']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+    // 手机上打开工具后底部菜单仍在
+    expect(find.byType(NavigationBar), findsOneWidget);
   });
 
   testWidgets('工具页：手机尺寸下卡片与工具页不溢出', (tester) async {

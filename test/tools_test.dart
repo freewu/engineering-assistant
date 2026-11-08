@@ -9,6 +9,7 @@ import 'package:engineering_assistant/theme/app_theme.dart';
 import 'package:engineering_assistant/ui/tools/area/area.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
+import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/pressure/pressure.dart';
 import 'package:engineering_assistant/ui/tools/speed/speed.dart';
 import 'package:engineering_assistant/ui/tools/temperature/temperature.dart';
@@ -17,6 +18,7 @@ import 'package:engineering_assistant/ui/tools/unit_catalog.dart';
 import 'package:engineering_assistant/ui/tools/volume/volume.dart';
 import 'package:engineering_assistant/ui/tools/weight/weight.dart';
 import 'package:engineering_assistant/ui/tools/tool_catalog.dart';
+import 'package:engineering_assistant/ui/tools/material/material_strings.dart';
 
 void main() {
   group('换算单位的多语言名称', () {
@@ -799,6 +801,68 @@ void main() {
     });
   });
 
+  group('材料用量估算', () {
+    test('砖块数量：标准红砖 512 块/m³、多孔砖 320 块/m³', () {
+      expect(BrickType.standard.perCubicMeter, 512);
+      expect(BrickType.perforated.perCubicMeter, 320);
+      expect(brickCount(150, BrickType.standard), 76800);
+      expect(brickCount(150, BrickType.perforated), 48000);
+    });
+
+    test('每平方米砖数：12 / 24 / 37 墙分别是 64 / 128 / 192', () {
+      expect(WallThickness.thin.millimeters, 120);
+      expect(WallThickness.standard.millimeters, 240);
+      expect(WallThickness.thick.millimeters, 370);
+      expect(WallThickness.thin.perSquareMeter, 64);
+      expect(WallThickness.standard.perSquareMeter, 128);
+      expect(WallThickness.thick.perSquareMeter, 192);
+      expect(bricksByWall(10, WallThickness.standard), 1280);
+    });
+
+    test('混凝土：面积 × 厚度', () {
+      expect(concreteVolume(1200, kCushionThickness), closeTo(120, 1e-9));
+      expect(concreteVolume(100, kSlabThickness), closeTo(12, 1e-9));
+      expect(concreteVolume(0, 0.1), 0);
+    });
+
+    test('水泥与砂子：建筑面积 × 单耗', () {
+      expect(kCementRates, <double>[0.03, 0.04, 0.05]);
+      expect(cementTons(10000, 0.05), 500);
+      expect(cementTons(10000, 0.03), closeTo(300, 1e-9));
+      expect(sandVolume(1000), closeTo(50, 1e-9));
+      expect(sandVolume(1000, rate: 0.04), closeTo(40, 1e-9));
+    });
+
+    test('五种语言的「材料用量」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kMaterialStrings, language);
+        for (final text in <String>[
+          s.tabBricks,
+          s.tabConcrete,
+          s.tabCement,
+          s.tabSand,
+          s.brickFormula,
+          s.concreteFormula,
+          s.cementFormula,
+          s.sandFormula,
+          s.concreteHint,
+          s.cementHint,
+          s.sandHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        for (final wall in WallThickness.values) {
+          expect(
+            s.wallName(wall),
+            isNotEmpty,
+            reason: '${language.code} ${wall.name}',
+          );
+        }
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -828,11 +892,12 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八种单位换算工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 材料用量在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 8, reason: language.code);
+        expect(visibleTools.length, 9, reason: language.code);
         for (final id in <String>[
+          'material',
           'distance',
           'area',
           'volume',
@@ -846,7 +911,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 8);
+      expect(kTools.length, 9);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -860,7 +925,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 8);
+      expect(kTools.length, 9);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

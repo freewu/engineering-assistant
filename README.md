@@ -2,7 +2,7 @@
 
 <img src="logo.jpg" alt="应用图标" width="96" align="right" />
 
-应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算与八个单位换算工具。
+应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具与材料用量估算。
 支持深色 / 浅色主题与五种界面语言（简体中文、繁體中文、English、日本語、Español）。
 
 ![计算器](docs/screenshots/calculator.png)
@@ -50,6 +50,7 @@
 | 热量换算 | 焦耳、卡路里、瓦时、英热单位等 |
 | 压力换算 | 帕、巴、托、psi、标准大气压等 |
 | 速度换算 | 米每秒、千米每小时、英里每小时、节等 |
+| 材料用量 | 砖块 / 混凝土 / 水泥 / 砂子四个 tab，按体积或建筑面积估材料量 |
 
 ![工具](docs/screenshots/tools.png)
 
@@ -59,7 +60,24 @@
 - 每张卡片右上角的图钉可以把工具**置顶**：置顶的工具排在页面最前面（单列一个「置顶工具」分区，其余归到「其他工具」），再点一次图钉即可取消。最多能置顶几个由设置页的「置顶数量」决定，默认 3 个、可在 2 ~ 5 之间调整
 - 每个工具都记得上次填的内容：数值、选的单位 / 计量体系都存在本地（键 `tool.<工具 id>`，值是一小段 JSON），重新进入时原样填回；输入停下 400 ms 后写一次盘，离开页面时再兜一次
 
-Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`）直接打开某个工具。
+Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`、`material`）直接打开某个工具。
+
+### 材料用量（四个 tab）
+
+| tab | 算法 |
+| --- | --- |
+| 砖块 | 砖数 = 墙体体积 × 512（标准红砖 240×115×53 mm）/ 320（多孔砖）；另列 12 / 24 / 37 墙每平方米 64 / 128 / 192 块，用来快速校核 |
+| 混凝土 | 混凝土 = 面积 × 厚度（基础垫层常用 0.1 m，楼板 0.10 ~ 0.15 m） |
+| 水泥 | 水泥 = 建筑面积 × 0.03 ~ 0.05 吨/㎡ |
+| 砂子 | 砂子 = 建筑面积 × 0.05 m³/㎡ |
+
+例子：24 墙、240 mm 厚、总体积 150 m³ 的砖混住宅，标准红砖 = 150 × 512 = 76,800 块；
+1200 ㎡ 垫层、厚 0.1 m，混凝土 = 120 m³；10000 ㎡ 办公楼按 0.05 吨/㎡ 估水泥 500 吨；
+1000 ㎡ 住宅按 0.05 m³/㎡ 估砂子 50 m³。
+
+四个 tab 各自记一份输入（键 `tool.material`），公式只做方案阶段估算，正式下料以图纸、配合比与当地定额为准。
+
+![材料用量](docs/screenshots/material.png)
 
 ## 设置与多语言
 
@@ -72,13 +90,14 @@ Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置
   （`lib/theme/app_theme.dart` 的 `kDarkPalette` / `kLightPalette`），
   不只是换背景色，卡片、描边、按键渐变都跟着换
 - **语言**：下拉框切换简体中文、繁體中文、English、日本語、Español；首次启动跟随系统语言
-  （系统语言不在支持列表里时用英文），之后以设置里选的为准。工具卡片名称、卖点、说明
+  （系统语言不在支持列表里时用英文），之后以设置里选的为准。工具卡片名称、卖点
   与工具内文案都随语言切换
 - **置顶数量**：工具页最多能置顶几个工具（2 ~ 5，默认 3），卡片右上角显示当前「已置顶 2 / 3」；
   置顶项本身在工具页点图钉切换，存在本地（键 `pinned_tools` / `pinned_limit`）
 - **单位换算默认值**：长度 / 面积 / 容量 / 重量 / 速度五个换算工具各记一套「默认计量体系」与
   「结果默认 tab」（速度没有市制，选项只有公制 / 英制）；温度 / 热量 / 压力不分体系，
   卡片里只有「默认单位」一项；八个换算工具的值各存一份，改动长度换算不影响面积换算
+- **材料用量**：没有设置项，四个 tab 的输入各自记在本地
 - **关于**：版本号与仓库地址，一键复制链接
 
 浅色模式下的计算器（按键、显示屏、工具卡片都已跟着变浅）：
@@ -99,13 +118,14 @@ Web 端可深链：`?page=settings` 直接打开设置页，`?page=tools` 同理
 - **应用级文案**在 `lib/l10n/`：`AppStrings` 是抽象类，五种语言各一个实现，
   用 `t.xxx` 取当前语言文案（`t` 依赖全局当前语言，切换后整棵树重建）
 - **工具语言包**和逻辑、界面放在同一个目录，如 `lib/ui/tools/distance/distance_lang.dart`：
-  `const Map<AppLanguage, ToolText> kDistanceLang`，每个语言三项——名称、卖点、说明。
+  `const Map<AppLanguage, ToolText> kDistanceLang`，每个语言两项——名称、卖点。
   `ToolInfo` 只存这份 map，`tool.name` 等 getter 按当前语言取，缺翻译回落简体中文
 - **工具页内部文案**再各放一份 `<tool>_strings.dart`：一个 `class <Tool>Strings`
   用 `required` 具名字段列出全部文案，配合 `const Map<AppLanguage, <Tool>Strings>`
   与 `<Tool>Strings get <tool>Strings`（`required` 保证五种语言不缺项、漏写直接编译报错）。
   带参数的话术一律写成 `{0}` / `{1}` 模板，用 `fill()` 填充，避免在代码里拼句子
-- 八个换算工具共用 `lib/ui/tools/widgets/unit_convert_strings.dart`，
+- 八个换算工具共用 `lib/ui/tools/widgets/unit_convert_strings.dart`，材料用量另有
+  `lib/ui/tools/material/material_strings.dart`，
   体系名称统一走 `measureSystemLabel()`
 - **换算数据层也带语言**：`MeasureUnit.names` / `MeasureSample.names` 存 en / ja / es，
   `labelIn(language)` 取不到就回落简体中文（`zhHant` 与 `zhHans` 都用原文）；
