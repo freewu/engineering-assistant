@@ -67,6 +67,9 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   输入框一律用 `_draft.controller('字段', 默认值)` 建，选项（单位 / 模式 / 枚举）改了调
   `_draft.setEnum(...)`，初值用 `_draft.text / integer / enumOf` 读，读不到再回落到设置页的默认值。
   存储键是 `tool.<工具 id>`（一段 JSON），`SettingsController` 里 400 ms 防抖写盘、`dispose` 时兜底。
+  **空串与 null 语义不同**：`setToolDraftValue(id, field, '')` 是「用户把输入框清空了」，空值要存下来，
+  重进页面仍是空的；只有 `null`（设置页改默认值 / `clearToolDraft`）才真的删字段。页面里空输入一律
+  当「不计算」处理：结果显示「—」，合计跳过它，不要自己填回默认值。
   设置页改默认值（`setConvertSystem`、`setConvertTab`、`setConvertUnit` 等）必须调 `clearToolDraft()`
   清掉对应草稿，否则旧数值会被新单位解释。
 - **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要「默认单位」的工具才建 `setting.dart`（材料用量 / 建筑面积这类纯计算页没有设置项）。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。

@@ -642,6 +642,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('填入数值并选好单位后自动换算'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    // 清空是会被记住的：退出再进来仍是空的，不会填回默认值
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('长度换算'));
+    await tester.pumpAndSettle();
+    expect(find.text('填入数值并选好单位后自动换算'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      '',
+    );
+    // 重新填数值就照常换算（单位还是上次选的尺）
+    await tester.enterText(find.byType(TextField).first, '5');
+    await tester.pumpAndSettle();
+    expect(find.text('5 尺'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
   });
 
   // (深链 id, 页面类型, 默认换算的标题, 结果里必须出现的一行)
@@ -1092,7 +1108,7 @@ void main() {
     expect(find.text('1'), findsWidgets);
   });
 
-  testWidgets('材料用量：四个 tab 各算各的，重进后数值与 tab 都还在', (tester) async {
+  testWidgets('材料用量：四个 tab 各算各的，空着不算，重进后数值与 tab 都还在', (tester) async {
     tester.view.physicalSize = const Size(1440, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1112,62 +1128,72 @@ void main() {
       expect(find.widgetWithText(Tab, label), findsOneWidget);
     }
 
-    // 砖块：默认 1 m³ 标准红砖 = 512 块，下面是三种墙厚的每平方米校核
-    expect(find.text('512 块'), findsOneWidget);
-    expect(find.text('砖数 = 1 m³ × 512 = 512 块'), findsOneWidget);
+    Future<void> input(String section, String value, {int index = 0}) async {
+      await tester.enterText(
+        find
+            .descendant(
+              of: find.byKey(Key(section)),
+              matching: find.byType(TextField),
+            )
+            .at(index),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // 默认全空：不计算，结果只有「—」；每平方米砖数照常给出参考值
+    expect(find.text('—'), findsOneWidget);
     expect(find.text('12 墙（120 mm）'), findsOneWidget);
     expect(find.text('128 块/㎡'), findsOneWidget);
-    expect(find.text('192 块/㎡'), findsOneWidget);
 
-    // 填 150 m³ = 76,800 块
-    await tester.enterText(
-      find.descendant(
-        of: find.byKey(const Key('material-bricks')),
-        matching: find.byType(TextField),
-      ),
-      '150',
-    );
-    await tester.pumpAndSettle();
+    // 砖块：150 m³ × 512 = 76800 块
+    await input('material-bricks', '150');
     expect(find.text('76800 块'), findsOneWidget);
+    expect(find.text('砖数 = 150 m³ × 512 = 76800 块'), findsOneWidget);
+    // 清空就不算
+    await input('material-bricks', '');
+    expect(find.text('—'), findsOneWidget);
+    await input('material-bricks', '150');
 
-    // 混凝土：1 ㎡ × 0.1 m = 0.1 m³
+    // 混凝土：1200 ㎡ × 0.1 m = 120 m³（厚度默认 0.1）
     await tester.tap(find.widgetWithText(Tab, '混凝土'));
     await tester.pumpAndSettle();
-    expect(find.text('0.1 m³'), findsOneWidget);
-    expect(find.text('混凝土 = 1 ㎡ × 0.1 m = 0.1 m³'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+    await input('material-concrete', '1200');
+    expect(find.text('120 m³'), findsOneWidget);
 
-    // 水泥：1 ㎡ × 0.05 = 0.05 吨，单耗换成 0.03 后重算
+    // 水泥：10000 ㎡ × 0.05 = 500 吨，单耗换成 0.03 后重算
     await tester.tap(find.widgetWithText(Tab, '水泥'));
     await tester.pumpAndSettle();
-    expect(find.text('0.05 吨'), findsOneWidget);
+    await input('material-cement', '10000');
+    expect(find.text('500 吨'), findsOneWidget);
     await tester.tap(find.byKey(const Key('material-cement-rate')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('0.03 吨/㎡').last);
     await tester.pumpAndSettle();
-    expect(find.text('0.03 吨'), findsOneWidget);
+    expect(find.text('300 吨'), findsOneWidget);
 
-    // 砂子：1 ㎡ × 0.05 = 0.05 m³
+    // 砂子：1000 ㎡ × 0.05 = 50 m³
     await tester.tap(find.widgetWithText(Tab, '砂子'));
     await tester.pumpAndSettle();
-    expect(find.text('0.05 m³'), findsOneWidget);
-    expect(find.text('砂子 = 1 ㎡ × 0.05 = 0.05 m³'), findsOneWidget);
+    await input('material-sand', '1000');
+    expect(find.text('50 m³'), findsOneWidget);
+    expect(find.text('砂子 = 1000 ㎡ × 0.05 = 50 m³'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // 退出再进来：停在砂子 tab，填过的墙体体积也还在
+    // 退出再进来：停在砂子 tab，填过的数值也都还在
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.text('材料用量'));
     await tester.pumpAndSettle();
-    expect(find.text('砂子 = 1 ㎡ × 0.05 = 0.05 m³'), findsOneWidget);
+    expect(find.text('50 m³'), findsOneWidget);
     await tester.tap(find.widgetWithText(Tab, '砖块'));
     await tester.pumpAndSettle();
     expect(find.text('76800 块'), findsOneWidget);
-
-    // 草稿是防抖写盘的，等这个 400 ms 的定时器落地，免得测试结束时还挂着
     await tester.pump(const Duration(milliseconds: 600));
   });
 
-  testWidgets('建筑面积：六个 tab 分项计算并合计，雨篷按柱与宽度判断', (tester) async {
+  testWidgets('建筑面积：六个 tab 分项计算并合计，空项不计入', (tester) async {
     tester.view.physicalSize = const Size(1440, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1186,102 +1212,108 @@ void main() {
       expect(find.widgetWithText(Tab, label), findsOneWidget);
     }
 
-    // 单层：默认 1 m × 1 m，高 3 m 算全面积
-    expect(find.text('S = 1 m × 1 m × 1 = 1 m²'), findsOneWidget);
-    await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const Key('building-single')),
-            matching: find.byType(TextField),
-          )
-          .first,
-      '30',
-    );
-    await tester.pumpAndSettle();
-    // 宽度还是 1 m → 30 m²，合计 = 30 + 3（多层 3×1）+ 0.5 + 1 + 1 + 0.5
-    expect(find.text('30 ㎡'), findsOneWidget);
-    expect(find.text('36 ㎡'), findsOneWidget);
+    Future<void> input(String section, String value, {int index = 0}) async {
+      await tester.enterText(
+        find
+            .descendant(
+              of: find.byKey(Key(section)),
+              matching: find.byType(TextField),
+            )
+            .at(index),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
 
-    // 高度降到 2 m 只算一半
-    await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const Key('building-single')),
-            matching: find.byType(TextField),
-          )
-          .last,
-      '2',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('15 ㎡'), findsOneWidget);
-    expect(find.text('21 ㎡'), findsOneWidget);
+    // 全空：单层面积与合计都是「—」，不做计算
+    expect(find.text('—'), findsNWidgets(2));
 
-    // 多层：3 层 × 1 ㎡ = 3 ㎡
+    // 单层 30 m × 15 m，高 3 m → 450 ㎡，合计也只有这一项
+    await input('building-single', '30', index: 0);
+    await input('building-single', '15', index: 1);
+    await input('building-single', '3', index: 2);
+    expect(find.text('450 ㎡'), findsNWidgets(2));
+    expect(find.text('S = 30 m × 15 m × 1 = 450 m²'), findsOneWidget);
+
+    // 高度降到 2 m 只算一半 → 225 ㎡
+    await input('building-single', '2', index: 2);
+    expect(find.text('225 ㎡'), findsNWidgets(2));
+    expect(find.text('S = 30 m × 15 m × 1/2 = 225 m²'), findsOneWidget);
+
+    // 清空长度：这一项不计入，合计跟着回到「—」
+    await input('building-single', '', index: 0);
+    expect(find.text('—'), findsNWidgets(2));
+    await input('building-single', '30', index: 0);
+
+    // 多层：3 层 × 100 ㎡ = 300 ㎡，合计 225 + 300 = 525 ㎡
     await tester.tap(find.widgetWithText(Tab, '多层'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 3 层 × 1 m² = 3 m²'), findsOneWidget);
+    await input('building-multi', '3', index: 0);
+    await input('building-multi', '100', index: 1);
+    expect(find.text('S = 3 层 × 100 m² = 300 m²'), findsOneWidget);
+    expect(find.text('525 ㎡'), findsOneWidget);
 
-    // 阳台：1 ㎡ 的围护面积只算一半
+    // 阳台：10 ㎡ 的围护面积只算一半 → 5 ㎡，合计 530 ㎡
     await tester.tap(find.widgetWithText(Tab, '阳台'));
     await tester.pumpAndSettle();
-    expect(find.text('0.5 ㎡'), findsWidgets);
+    await input('building-balcony', '10');
+    expect(find.text('S = 10 m² × 1/2 = 5 m²'), findsOneWidget);
+    expect(find.text('530 ㎡'), findsOneWidget);
 
-    // 雨篷：无柱、宽度 3 m > 2.1 m → 全面积；改成 2 m 就不计
+    // 雨篷：无柱、宽度 3 m > 2.1 m → 全面积 6 ㎡，合计 536 ㎡
     await tester.tap(find.widgetWithText(Tab, '雨篷'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 1 m² = 1 m²'), findsOneWidget);
-    await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const Key('building-canopy')),
-            matching: find.byType(TextField),
-          )
-          .last,
-      '2',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('0 ㎡'), findsWidgets);
+    await input('building-canopy', '6', index: 0);
+    await input('building-canopy', '3', index: 1);
+    expect(find.text('S = 6 m² = 6 m²'), findsOneWidget);
+    expect(find.text('536 ㎡'), findsOneWidget);
+
+    // 宽度改成 2 m：无柱不计入，合计回到 530 ㎡
+    await input('building-canopy', '2', index: 1);
+    expect(find.text('0 ㎡'), findsOneWidget);
     expect(find.text('无柱且宽度 ≤ 2.1 m，不计算建筑面积。'), findsOneWidget);
+    expect(find.text('530 ㎡'), findsOneWidget);
 
     // 改成有柱，2 m 宽也按全面积算
     await tester.tap(find.byKey(const Key('building-canopy-columns')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('有柱').last);
     await tester.pumpAndSettle();
-    expect(find.text('S = 1 m² = 1 m²'), findsOneWidget);
+    expect(find.text('S = 6 m² = 6 m²'), findsOneWidget);
+    expect(find.text('536 ㎡'), findsOneWidget);
 
-    // 门斗：层高 2.4 m 全面积，降到 2 m 算一半
+    // 门斗：4 ㎡、层高 2.4 m 全面积 → 4 ㎡，合计 540 ㎡
     await tester.tap(find.widgetWithText(Tab, '门斗'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 1 m² × 1 = 1 m²'), findsOneWidget);
-    await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const Key('building-vestibule')),
-            matching: find.byType(TextField),
-          )
-          .last,
-      '2',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('0.5 ㎡'), findsWidgets);
-    expect(find.text('S = 1 m² × 1/2 = 0.5 m²'), findsOneWidget);
+    await input('building-vestibule', '4', index: 0);
+    await input('building-vestibule', '2.4', index: 1);
+    expect(find.text('S = 4 m² × 1 = 4 m²'), findsOneWidget);
+    expect(find.text('540 ㎡'), findsOneWidget);
 
-    // 车棚：顶盖投影 1 ㎡ 只算一半
+    // 层高降到 2 m 只算一半 → 2 ㎡，合计 538 ㎡
+    await input('building-vestibule', '2', index: 1);
+    expect(find.text('S = 4 m² × 1/2 = 2 m²'), findsOneWidget);
+    expect(find.text('538 ㎡'), findsOneWidget);
+
+    // 车棚：顶盖投影 20 ㎡ 只算一半 → 10 ㎡，合计 548 ㎡
     await tester.tap(find.widgetWithText(Tab, '车棚'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 1 m² × 1/2 = 0.5 m²'), findsOneWidget);
+    await input('building-shed', '20');
+    expect(find.text('S = 20 m² × 1/2 = 10 m²'), findsOneWidget);
+    expect(find.text('548 ㎡'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // 退出再进来：还停在车棚 tab，填过的单层尺寸也还在
+    // 退出再进来：还停在车棚 tab，填过的数值也都还在
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.text('建筑面积'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 1 m² × 1/2 = 0.5 m²'), findsOneWidget);
+    expect(find.text('10 ㎡'), findsOneWidget);
+    expect(find.text('548 ㎡'), findsOneWidget);
     await tester.tap(find.widgetWithText(Tab, '单层'));
     await tester.pumpAndSettle();
-    expect(find.text('S = 30 m × 1 m × 1/2 = 15 m²'), findsOneWidget);
+    expect(find.text('225 ㎡'), findsOneWidget);
+    expect(find.text('548 ㎡'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 

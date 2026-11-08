@@ -18,7 +18,7 @@ class ToolDraft {
 
   final Map<String, String> _values;
 
-  /// 上次填的原文；没存过时为 null（页面用默认值）。
+  /// 上次填的原文；没存过时为 null（页面用默认值），用户清空过则是空串。
   String? text(String field) => _values[field];
 
   /// 上次填的整数；没存过或不是整数时返回 null。
@@ -43,11 +43,14 @@ class ToolDraft {
     return null;
   }
 
-  /// 记下一个字段；传 null 或空串表示清掉（下次用默认值）。
+  /// 记下一个字段。
+  ///
+  /// 传 null 表示清掉这个字段（下次用页面默认值）；传空串表示「用户主动清空了
+  /// 输入框」，这个空值也会被记下来，重进页面仍然是空的，不会再填回默认值。
   void set(String field, Object? value) {
     final next = value == null ? null : '$value';
     if (_values[field] == next) return;
-    if (next == null || next.isEmpty) {
+    if (next == null) {
       _values.remove(field);
       currentSettings?.setToolDraftValue(toolId, field, null);
       return;

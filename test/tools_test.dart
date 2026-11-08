@@ -448,8 +448,9 @@ void main() {
 
       settings.setToolDraftValue('distance', 'height', '180');
       settings.setToolDraftValue('distance', 'unit', 'imperial');
-      // 空串表示清掉该字段（输入框被清空时）
+      // 空串是「用户把输入框清空了」，要存下来；null 才是删掉字段
       settings.setToolDraftValue('distance', 'weight', '');
+      settings.setToolDraftValue('distance', 'note', null);
       settings.setToolDraftValue('weight', 'amount', '500000');
       await settings.flushDrafts();
 
@@ -464,6 +465,7 @@ void main() {
       expect(reloaded.toolDraftOf('distance'), <String, String>{
         'height': '180',
         'unit': 'imperial',
+        'weight': '',
       });
       expect(reloaded.toolDraftOf('weight'), <String, String>{
         'amount': '500000',
@@ -471,12 +473,29 @@ void main() {
       expect(reloaded.toolDraftOf('nope'), isEmpty);
     });
 
-    test('清空最后一个字段时整条草稿也删掉', () async {
+    test('清空输入框（空串）会被记住，重进还是空的', () async {
       final store = _MemoryStore();
       final settings = SettingsController(store: store);
       settings.setToolDraftValue('energy', 'age', '40');
       await settings.flushDrafts();
       settings.setToolDraftValue('energy', 'age', '');
+      await settings.flushDrafts();
+
+      // 空值留着，不再回落到页面默认值
+      expect(settings.toolDraftOf('energy'), <String, String>{'age': ''});
+      expect(store.values['tool.energy'], '{"age":""}');
+
+      final reloaded = SettingsController(store: store);
+      await reloaded.load();
+      expect(reloaded.toolDraftOf('energy'), <String, String>{'age': ''});
+    });
+
+    test('传 null 才真的删字段，删光后整条草稿也删掉', () async {
+      final store = _MemoryStore();
+      final settings = SettingsController(store: store);
+      settings.setToolDraftValue('energy', 'age', '40');
+      await settings.flushDrafts();
+      settings.setToolDraftValue('energy', 'age', null);
       await settings.flushDrafts();
 
       expect(settings.toolDraftOf('energy'), isEmpty);

@@ -33,41 +33,42 @@ class _BuildingAreaPageState extends State<BuildingAreaPage>
     vsync: this,
   )..addListener(_onTabChanged);
 
+  // 数值一律默认为空：没填的项就不计算，结果与合计都跳过它
   // 单层建筑：L / B / 结构高度
-  late final TextEditingController _length = _draft.controller('length', '1');
-  late final TextEditingController _width = _draft.controller('width', '1');
-  late final TextEditingController _height = _draft.controller('height', '3');
+  late final TextEditingController _length = _draft.controller('length', '');
+  late final TextEditingController _width = _draft.controller('width', '');
+  late final TextEditingController _height = _draft.controller('height', '');
 
   // 多层建筑：层数 / 每层面积
-  late final TextEditingController _floors = _draft.controller('floors', '3');
+  late final TextEditingController _floors = _draft.controller('floors', '');
   late final TextEditingController _perFloor = _draft.controller(
     'perFloor',
-    '1',
+    '',
   );
 
   // 阳台
-  late final TextEditingController _balcony = _draft.controller('balcony', '1');
+  late final TextEditingController _balcony = _draft.controller('balcony', '');
 
   // 雨篷：投影面积 / 外挑宽度 / 有柱无柱
-  late final TextEditingController _canopy = _draft.controller('canopy', '1');
+  late final TextEditingController _canopy = _draft.controller('canopy', '');
   late final TextEditingController _canopyWidth = _draft.controller(
     'canopyWidth',
-    '3',
+    '',
   );
   late bool _hasColumns = _draft.flag('hasColumns');
 
   // 门斗：围护面积 / 结构层高
   late final TextEditingController _vestibule = _draft.controller(
     'vestibule',
-    '1',
+    '',
   );
   late final TextEditingController _vestibuleHeight = _draft.controller(
     'vestibuleHeight',
-    '2.4',
+    '',
   );
 
   // 车棚 / 货棚
-  late final TextEditingController _shed = _draft.controller('shed', '1');
+  late final TextEditingController _shed = _draft.controller('shed', '');
 
   BuildingAreaStrings get _s => buildingAreaStrings;
 

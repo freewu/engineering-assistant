@@ -34,13 +34,14 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
     vsync: this,
   )..addListener(_onTabChanged);
 
+  // 数值一律默认为空：空着的项就不计算，结果显示「—」
   late final TextEditingController _brickVolume = _draft.controller(
     'brickVolume',
-    '1',
+    '',
   );
   late final TextEditingController _concreteArea = _draft.controller(
     'concreteArea',
-    '1',
+    '',
   );
   late final TextEditingController _concreteThickness = _draft.controller(
     'concreteThickness',

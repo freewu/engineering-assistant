@@ -294,18 +294,20 @@ class SettingsController extends ChangeNotifier {
   Map<String, String> toolDraftOf(String toolId) =>
       toolDrafts[toolId] ?? const <String, String>{};
 
-  /// 记下工具页的一个输入字段；`value` 为 null / 空串表示删掉该字段。
+  /// 记下工具页的一个输入字段；`value` 为 null 表示删掉该字段。
+  ///
+  /// 空串是要存下来的：用户把输入框清空了，重进页面也该是空的，不能再填回
+  /// 默认值。只有 null（设置页改了默认值、清草稿）才真的把字段删掉。
   ///
   /// 草稿不通知监听者：输入框自己会重建，没必要让全应用跟着刷新。写盘有
   /// 400 ms 的合并，打字时最多每 400 ms 落一次盘。
   void setToolDraftValue(String toolId, String field, String? value) {
     final draft = toolDrafts.putIfAbsent(toolId, () => <String, String>{});
-    final next = (value == null || value.isEmpty) ? null : value;
-    if (draft[field] == next) return;
-    if (next == null) {
+    if (draft[field] == value) return;
+    if (value == null) {
       draft.remove(field);
     } else {
-      draft[field] = next;
+      draft[field] = value;
     }
     if (draft.isEmpty) toolDrafts.remove(toolId);
     _draftTimers.putIfAbsent(
