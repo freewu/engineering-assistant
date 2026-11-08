@@ -9,6 +9,8 @@ import 'package:engineering_assistant/theme/app_theme.dart';
 import 'package:engineering_assistant/ui/tools/area/area.dart';
 import 'package:engineering_assistant/ui/tools/building/building_area.dart';
 import 'package:engineering_assistant/ui/tools/building/building_area_strings.dart';
+import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
+import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
@@ -998,6 +1000,127 @@ void main() {
     });
   });
 
+  group('混凝土构件工程量', () {
+    test('矩形柱 / 矩形梁：截面 × 截面 × 长度', () {
+      expect(columnVolume(sectionA: 0.5, sectionB: 0.5, height: 3), 0.75);
+      expect(beamVolume(sectionA: 0.25, sectionB: 0.5, length: 6), 0.75);
+    });
+
+    test('现浇板：净长 × 净宽 × 板厚，孔洞超过 0.3 ㎡ 才扣', () {
+      expect(
+        slabVolume(length: 6, width: 4, thickness: 0.12),
+        closeTo(2.88, 1e-9),
+      );
+      // ≤ 0.3 ㎡ 的孔洞不扣（含 300 × 300 mm）
+      expect(
+        slabVolume(length: 6, width: 4, thickness: 0.12, holeArea: 0.3),
+        closeTo(2.88, 1e-9),
+      );
+      expect(
+        slabVolume(length: 6, width: 4, thickness: 0.12, holeArea: 0.09),
+        closeTo(2.88, 1e-9),
+      );
+      // 超过 0.3 ㎡ 才从板面积里扣
+      expect(
+        slabVolume(length: 6, width: 4, thickness: 0.12, holeArea: 0.5),
+        closeTo(2.82, 1e-9),
+      );
+      expect(holeDeducted(0.3), isFalse);
+      expect(holeDeducted(0.3001), isTrue);
+      expect(kIgnoredHoleArea, closeTo(0.09, 1e-9));
+      expect(kDeductHoleArea, 0.3);
+    });
+
+    test('孔洞比板面还大时按 0 算，不出负数', () {
+      expect(slabVolume(length: 2, width: 2, thickness: 0.1, holeArea: 9), 0);
+    });
+
+    test('混凝土墙：墙长 × 墙高 × 墙厚', () {
+      expect(
+        wallVolume(length: 5, height: 3, thickness: 0.2),
+        closeTo(3, 1e-9),
+      );
+    });
+
+    test('楼梯：水平投影面积 × 折算厚度', () {
+      expect(
+        stairVolume(planArea: 12, equivalentThickness: kDefaultStairThickness),
+        3,
+      );
+      expect(kStairThicknessMin, 0.2);
+      expect(kStairThicknessMax, 0.3);
+    });
+
+    test('五种语言的「混凝土构件」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kConcreteStrings, language);
+        for (final text in <String>[
+          s.tabColumn,
+          s.tabBeam,
+          s.tabSlab,
+          s.tabWall,
+          s.tabStair,
+          s.columnSection,
+          s.beamSection,
+          s.slabSection,
+          s.wallSection,
+          s.stairSection,
+          s.sectionA,
+          s.sectionB,
+          s.columnHeight,
+          s.beamLength,
+          s.netLength,
+          s.netWidth,
+          s.slabThickness,
+          s.holeArea,
+          s.wallLength,
+          s.wallHeight,
+          s.wallThickness,
+          s.planArea,
+          s.equivalentThickness,
+          s.meterUnit,
+          s.squareMeter,
+          s.cubicMeter,
+          s.columnResult,
+          s.beamResult,
+          s.slabResult,
+          s.wallResult,
+          s.stairResult,
+          s.columnFormula,
+          s.beamFormula,
+          s.slabFormula,
+          s.slabHoleFormula,
+          s.wallFormula,
+          s.stairFormula,
+          s.columnHint,
+          s.beamHint,
+          s.slabHint,
+          s.wallHint,
+          s.stairHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 模板占位数量要对得上：带孔洞的板公式是 5 个，其余 3 ~ 4 个
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.slabHoleFormula).length,
+          5,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.columnFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.stairFormula).length,
+          3,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1027,13 +1150,14 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 材料用量 + 建筑面积在所有界面语言下都展示', () {
+    test('八个换算工具 + 材料用量 + 建筑面积 + 混凝土构件在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 10, reason: language.code);
+        expect(visibleTools.length, 11, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
+          'concrete',
           'distance',
           'area',
           'volume',
@@ -1047,7 +1171,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 10);
+      expect(kTools.length, 11);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1061,7 +1185,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 10);
+      expect(kTools.length, 11);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

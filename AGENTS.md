@@ -4,7 +4,7 @@
 
 ## 项目速览
 
-- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度）+ 材料用量估算（砖块 / 混凝土 / 水泥 / 砂子四个 tab）+ 建筑面积计算（单层 / 多层 / 阳台 / 雨篷 / 门斗 / 车棚货棚六个 tab），支持 Web / Windows / Android。
+- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度）+ 材料用量估算（砖块 / 混凝土 / 水泥 / 砂子四个 tab）+ 建筑面积计算（单层 / 多层 / 阳台 / 雨篷 / 门斗 / 车棚货棚六个 tab）+ 混凝土构件工程量（柱 / 梁 / 板 / 墙 / 楼梯五个 tab，按体积算），支持 Web / Windows / Android。
 - **只保留工程类工具**：健康（BMI / 基础代谢）、理财（复利 / 利率 / 贷款）、社保（养老金 / 退休 / 个税）类工具已从本仓库移除，不要加回来；新增工具要贴合工程计算。
 - 应用图标来源是根目录的 `logo.jpg`（Web / Windows / Android 共用），脚本整张等比缩放、不裁剪，由 `just icons` 生成各平台图标。
 - 表达式解析与求值：`lib/core/math_engine.dart`（自研词法 + 递归下降，无第三方计算库）。
@@ -72,7 +72,7 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   当「不计算」处理：结果显示「—」，合计跳过它，不要自己填回默认值。
   设置页改默认值（`setConvertSystem`、`setConvertTab`、`setConvertUnit` 等）必须调 `clearToolDraft()`
   清掉对应草稿，否则旧数值会被新单位解释。
-- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要「默认单位」的工具才建 `setting.dart`（材料用量 / 建筑面积这类纯计算页没有设置项）。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
+- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要「默认单位」的工具才建 `setting.dart`（材料用量 / 建筑面积 / 混凝土构件这类纯计算页没有设置项）。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
 - **工具的历史记录走通用接口**：需要「和历史比对」的工具不要自己写存储，
   统一调 `SettingsController` 的 `addToolHistory(toolId, entry, {limit})` /
   `toolHistoryOf(toolId)` / `removeToolHistory(toolId, index)` / `clearToolHistory(toolId)`，

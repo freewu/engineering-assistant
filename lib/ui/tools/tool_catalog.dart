@@ -1,5 +1,6 @@
 import 'area/defined.dart';
 import 'building/defined.dart';
+import 'concrete/defined.dart';
 import 'distance/defined.dart';
 import 'energy/defined.dart';
 import 'material/defined.dart';
@@ -15,13 +16,14 @@ export 'tool_info.dart';
 /// 全部内置工具，顺序即工具页展示顺序。
 ///
 /// 每项元数据都在各自目录的 `defined.dart` 里声明，这里只负责汇总。
-/// 目前是八个单位换算工具 + 材料用量估算 + 建筑面积，其余工程工具后续逐个补上。
+/// 目前是八个单位换算工具 + 材料用量估算 + 建筑面积 + 混凝土构件，其余工程工具后续逐个补上。
 ///
 /// 用 getter 而不是 `final` 变量：卡片配色取自 [AppColors]，而顶层 `final`
 /// 只在首次访问时求值，切到浅色主题后颜色就会停在旧配色上。
 List<ToolInfo> get kTools => List.unmodifiable(<ToolInfo>[
   materialTool,
   buildingAreaTool,
+  concreteTool,
   distanceTool,
   areaTool,
   volumeTool,

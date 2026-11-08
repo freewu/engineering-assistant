@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('10 個のアプリ'), findsOneWidget);
+    expect(find.text('11 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1315,6 +1315,127 @@ void main() {
     expect(find.text('225 ㎡'), findsOneWidget);
     expect(find.text('548 ㎡'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('混凝土构件：五个 tab 按体积计算，孔洞按 0.3 ㎡ 判断', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final settings = SettingsController(store: _MemoryStore());
+    await tester.pumpWidget(
+      EngineeringAssistantApp(
+        settings: settings,
+        initialTab: 1,
+        initialTool: 'concrete',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['柱', '梁', '板', '墙', '楼梯']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    Future<void> input(String section, String value, {int index = 0}) async {
+      await tester.enterText(
+        find
+            .descendant(
+              of: find.byKey(Key(section)),
+              matching: find.byType(TextField),
+            )
+            .at(index),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // 全空：不计算
+    expect(find.text('—'), findsOneWidget);
+
+    // 柱：0.5 × 0.5 × 3 = 0.75 m³
+    await input('concrete-column', '0.5', index: 0);
+    await input('concrete-column', '0.5', index: 1);
+    await input('concrete-column', '3', index: 2);
+    expect(find.text('0.75 m³'), findsOneWidget);
+    expect(find.text('V = 0.5 m × 0.5 m × 3 m = 0.75 m³'), findsOneWidget);
+
+    // 梁：0.25 × 0.5 × 6 = 0.75 m³
+    await tester.tap(find.widgetWithText(Tab, '梁'));
+    await tester.pumpAndSettle();
+    expect(find.text('—'), findsOneWidget);
+    await input('concrete-beam', '0.25', index: 0);
+    await input('concrete-beam', '0.5', index: 1);
+    await input('concrete-beam', '6', index: 2);
+    expect(find.text('V = 0.25 m × 0.5 m × 6 m = 0.75 m³'), findsOneWidget);
+
+    // 板：6 × 4 × 0.12 = 2.88 m³，没有孔洞时不带扣减项
+    await tester.tap(find.widgetWithText(Tab, '板'));
+    await tester.pumpAndSettle();
+    await input('concrete-slab', '6', index: 0);
+    await input('concrete-slab', '4', index: 1);
+    await input('concrete-slab', '0.12', index: 2);
+    expect(find.text('2.88 m³'), findsOneWidget);
+    expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
+
+    // 孔洞 0.2 ㎡ ≤ 0.3 ㎡：不扣，公式不变
+    await input('concrete-slab', '0.2', index: 3);
+    expect(find.text('2.88 m³'), findsOneWidget);
+    expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
+
+    // 孔洞 0.5 ㎡ > 0.3 ㎡：扣除后 2.82 m³
+    await input('concrete-slab', '0.5', index: 3);
+    expect(find.text('2.82 m³'), findsOneWidget);
+    expect(
+      find.text('V = （6 m × 4 m − 0.5 ㎡）× 0.12 m = 2.82 m³'),
+      findsOneWidget,
+    );
+
+    // 墙：5 × 3 × 0.2 = 3 m³
+    await tester.tap(find.widgetWithText(Tab, '墙'));
+    await tester.pumpAndSettle();
+    await input('concrete-wall', '5', index: 0);
+    await input('concrete-wall', '3', index: 1);
+    await input('concrete-wall', '0.2', index: 2);
+    expect(find.text('V = 5 m × 3 m × 0.2 m = 3 m³'), findsOneWidget);
+
+    // 楼梯：12 ㎡ × 0.25 m = 3 m³，清空后不算
+    await tester.tap(find.widgetWithText(Tab, '楼梯'));
+    await tester.pumpAndSettle();
+    await input('concrete-stair', '12', index: 0);
+    await input('concrete-stair', '0.25', index: 1);
+    expect(find.text('V = 12 ㎡ × 0.25 m = 3 m³'), findsOneWidget);
+    await input('concrete-stair', '', index: 1);
+    expect(find.text('—'), findsOneWidget);
+    await input('concrete-stair', '0.25', index: 1);
+    expect(tester.takeException(), isNull);
+
+    // 退出再进来：还停在楼梯 tab，各 tab 的数值都还在
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('混凝土构件'));
+    await tester.pumpAndSettle();
+    expect(find.text('3 m³'), findsOneWidget);
+    await tester.tap(find.widgetWithText(Tab, '板'));
+    await tester.pumpAndSettle();
+    expect(find.text('2.82 m³'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('混凝土构件：手机尺寸下五个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'concrete'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['梁', '板', '墙', '楼梯']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('建筑面积：手机尺寸下六个 tab 都不溢出', (tester) async {
