@@ -1,4 +1,4 @@
-# engineering-assistant —— Flutter 高级科学计算器（表达式计算 + 函数绘图）
+# engineering-assistant —— Flutter 工程计算工具集（表达式计算 + 单位换算）
 #
 #   常用：just test · just analyze · just run · just build-web
 #   列表：直接执行 just（不带参数）
@@ -130,24 +130,12 @@ analyze:
 # 格式化源码（dart format）
 [group('质量')]
 fmt:
-    @{{dart}} format lib test integration_test
+    @{{dart}} format lib test
 
 # 检查格式（CI 用，不修改文件）
 [group('质量')]
 fmt-check:
-    @{{dart}} format --output=none --set-exit-if-changed lib test integration_test
-
-# 在 Android 设备 / 模拟器上验证导出写进相册（需先连上设备）
-[group('质量')]
-test-android:
-    @. tool/android-env.sh; \
-      id=$({{flutter}} devices --machine | {{python}} tool/android_target.py device); \
-      [ -n "$id" ] || { \
-        echo "✗ 没有检测到 Android 设备或模拟器。"; \
-        echo "  · 真机：插上后允许本机调试，或先用 just emulator 启动模拟器"; \
-        exit 1; }; \
-      echo "  目标设备：$id"; \
-      {{flutter}} test integration_test/android_save_test.dart -d "$id"
+    @{{dart}} format --output=none --set-exit-if-changed lib test
 
 # 全部测试，可按名称过滤：just test 历史
 [group('质量')]
@@ -158,11 +146,6 @@ test filter="":
 [group('质量')]
 test-core:
     @{{flutter}} test test/core_test.dart
-
-# 绘图（视口 / 采样器 / 控制器）测试
-[group('质量')]
-test-plot:
-    @{{flutter}} test test/plot_test.dart
 
 # 布局与交互 Widget 测试
 [group('质量')]
@@ -275,7 +258,7 @@ preview port=port: build-web
     @echo "预览：http://localhost:{{port}}"
     @{{python}} -m http.server {{port}} --directory build/web
 
-# 根据 logo.jpg / logo-android.jpg 重新生成各平台应用图标（需 python3 + Pillow）
+# 根据 logo.jpg 重新生成各平台应用图标（需 python3 + Pillow）
 # Windows 的 python 常常没装 Pillow，with_pillow.sh 会自动挑一个能用的解释器
 [group('工具')]
 icons:

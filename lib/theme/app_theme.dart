@@ -28,7 +28,6 @@ class AppPalette {
     required this.orange,
     required this.textPrimary,
     required this.textSecondary,
-    required this.curvePalette,
   });
 
   /// 该配色对应的明暗，用来生成 [ThemeData] 与状态栏样式。
@@ -61,9 +60,6 @@ class AppPalette {
   final Color textPrimary;
   final Color textSecondary;
 
-  /// 曲线调色板。
-  final List<Color> curvePalette;
-
   bool get isDark => brightness == Brightness.dark;
 }
 
@@ -90,19 +86,9 @@ const AppPalette kDarkPalette = AppPalette(
   orange: Color(0xFFFF7A59),
   textPrimary: Color(0xFFE9F0FA),
   textSecondary: Color(0xFF93A4BB),
-  curvePalette: <Color>[
-    Color(0xFF4F9CFF),
-    Color(0xFFFF7A59),
-    Color(0xFF34D399),
-    Color(0xFFC084FC),
-    Color(0xFFFBBF24),
-    Color(0xFF22D3EE),
-    Color(0xFFF472B6),
-    Color(0xFFA3E635),
-  ],
 );
 
-/// 浅色配色：同一套色相压暗到白底可读，曲线调色板换成深色版本。
+/// 浅色配色：同一套色相压暗到白底可读。
 const AppPalette kLightPalette = AppPalette(
   brightness: Brightness.light,
   background: Color(0xFFF4F6FA),
@@ -125,16 +111,6 @@ const AppPalette kLightPalette = AppPalette(
   orange: Color(0xFFDC6320),
   textPrimary: Color(0xFF101B2D),
   textSecondary: Color(0xFF5A6B83),
-  curvePalette: <Color>[
-    Color(0xFF1F6FEB),
-    Color(0xFFDC6320),
-    Color(0xFF0F9D74),
-    Color(0xFF7C3AED),
-    Color(0xFFB45309),
-    Color(0xFF0E7490),
-    Color(0xFFDB2777),
-    Color(0xFF4D7C0F),
-  ],
 );
 
 /// 全局取色入口：所有颜色都读这里当前生效的 [AppPalette]。
@@ -175,8 +151,6 @@ abstract final class AppColors {
 
   static Color get textPrimary => _active.textPrimary;
   static Color get textSecondary => _active.textSecondary;
-
-  static List<Color> get curvePalette => _active.curvePalette;
 }
 
 abstract final class AppTheme {

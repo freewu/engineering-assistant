@@ -4,12 +4,11 @@
 
 ## 项目速览
 
-- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 2D 函数绘图 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度），支持 Web / Windows / Android。
+- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度），支持 Web / Windows / Android。
 - **只保留工程类工具**：健康（BMI / 基础代谢）、理财（复利 / 利率 / 贷款）、社保（养老金 / 退休 / 个税）类工具已从本仓库移除，不要加回来；新增工具要贴合工程计算。
-- 应用图标来源是根目录两份不透明 JPG：`logo.jpg`（Web / Windows）、`logo-android.jpg`（Android，满幅构图，自适应前景直接铺满），脚本整张等比缩放、不裁剪，由 `just icons` 生成各平台图标。
+- 应用图标来源是根目录的 `logo.jpg`（Web / Windows / Android 共用），脚本整张等比缩放、不裁剪，由 `just icons` 生成各平台图标。
 - 表达式解析与求值：`lib/core/math_engine.dart`（自研词法 + 递归下降，无第三方计算库）。
 - 小工具：一个工具一个目录 `lib/ui/tools/<tool>/`，逻辑、界面、语言包、设置项、`defined.dart` 都在里面。
-- 绘图：`lib/plot/`（视口、采样器、示例曲线），状态在 `lib/state/`，界面在 `lib/ui/`。
 - 多语言：`lib/l10n/`（语言枚举 `AppLanguage`、应用级文案 `AppStrings`、全局入口 `t`），工具语言包在 `lib/ui/tools/<tool>/<tool>_lang.dart`。
 - 配色：`lib/theme/app_theme.dart` 的 `AppPalette`（深色 `kDarkPalette` / 浅色 `kLightPalette`），全局取色入口是 `AppColors`；设置页在 `lib/ui/settings_page.dart`，状态在 `lib/state/settings_controller.dart`，本地存储在 `lib/services/settings_store*.dart`。
 - 已知环境：Windows + WSL，`flutter` / `dart` 是 Windows 程序（`D:\flutter\bin` 下是 bash 脚本 +
@@ -43,10 +42,10 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
 3. 写提交信息（中文，一行摘要 + 可选正文，说明动机与影响），例如：
 
    ```text
-   新增隐式方程绘图（marching squares 等值线）
+   新增压力换算的「标准大气压」
 
-   - f(x, y) = 0 逐格求交点并首尾相连，鞍点按格心符号消歧
-   - MathEngine 新增 compileSurface，追踪时显示 f(x, y) 取值
+   - 单位数据补 1 atm = 101325 Pa 的分数基准
+   - 五种语言的单位名与说明一并补齐
    ```
 
 4. `git push origin main`；分支尚未跟踪时用 `git push -u origin main`。
@@ -56,8 +55,8 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
 
 - 界面文案、注释、提交信息一律用中文；变量与 API 用英文。
 - 严格通过 `dart format`（80 列）与 `analysis_options.yaml` 的 lint，不要用 `// ignore:` 绕过。
-- 改动计算逻辑或采样算法时，在 `test/` 补单元测试；改动交互时补 Widget 测试。
-- 新增曲线类型 / 视图行为时同步更新 README 的功能列表、示例表格与测试数量。
+- 改动计算逻辑或换算数据时，在 `test/` 补单元测试；改动交互时补 Widget 测试。
+- 新增工具或换算单位时同步更新 README 的功能列表与测试数量。
 - **工具页置顶**：卡片右上角的图钉（`lib/ui/tools_page.dart` 的 `_PinButton`）切换置顶，状态存
   `SettingsController.pinnedTools`（键 `pinned_tools`），上限 `pinnedLimit`（键 `pinned_limit`，
   2 ~ 5，默认 3，设置页的 `lib/ui/tools/tools_setting.dart` 负责调）。工具页自己套
@@ -94,15 +93,11 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   （en / ja / es 三份，中文回落原文、缺翻译回落英文）。新增单位必须补 en / ja / es 三项，
   带说明的单位说明也要三份，`test/tools_test.dart` 会遍历各 catalog 检查。
 - **界面文案一律走多语言**：应用级（导航、设置、工具页标题）用 `t.xxx`（`lib/l10n/app_strings.dart` 里 `AppStrings` 的五个实现都要补），工具卡片名称 / 卖点 / 说明写进 `lib/ui/tools/<tool>/<tool>_lang.dart` 的 `k<Tool>Lang`。注释用中文，界面文案用各语言母语。
-- **计算器页与绘图页的文案单独成表**：`lib/l10n/calc_strings.dart`（`kCalcStrings`）与
-  `lib/l10n/plot_strings.dart`（`kPlotStrings`），写法同工具页 `<tool>_strings.dart`。
-  内置函数的说明按函数名查表（`CalcStrings.functionDescriptions` + `functionDescription()`）：
+- **计算器页的文案单独成表**：`lib/l10n/calc_strings.dart`（`kCalcStrings`），写法同工具页
+  `<tool>_strings.dart`。内置函数的说明按函数名查表
+  （`CalcStrings.functionDescriptions` + `functionDescription()`）：
   **简体直接用 `lib/core/builtins.dart` 的中文，其余四种语言必须翻全**
-  （`test/l10n_test.dart` 会逐条检查 48 个函数）。曲线类型名用
-  `PlotStrings.modeLabel()` / `modeMenu()` / `modeHint()`；角度单位名用 `CalcStrings.angleLabel()`。
-  示例曲线的名称与说明放在 `PlotPreset.names` / `descriptions`，用 `nameIn()` / `descriptionIn()` 取。
-  平台相关的「保存位置」文案（`plotSaveLocationNote()`、`SavedPlotFile.displayLocation`）
-  由服务层直接读 `plotStrings`，不要在 `lib/services/` 里写中文字面量。
+  （`test/l10n_test.dart` 会逐条检查 48 个函数）。角度单位名用 `CalcStrings.angleLabel()`。
 - **计算错误的文案也要走多语言**：`lib/core/` 里抛错一律
   `throw CalcException(CalcError.xxx, position: ..., args: [...])`，别直接塞中文；
   `CalcError` 枚举的 `template` 是简体中文兜底，其余四种语言写在
@@ -125,8 +120,5 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
 - 需要 Android 工具链的配方（`build-apk`、`android`）先 `. tool/android-env.sh`：它会补 `JAVA_HOME` / `ANDROID_HOME`，WSL 下再用 `WSLENV` 传给 Windows 侧进程。
 - Android 自适应图标 XML（`mipmap-anydpi-v26/*.xml`）必须声明 `xmlns:android`，否则 AAPT2 编译失败；`just icons-check` 会校验这一项。
 - Web 产物必须自包含：`just build-web` 走 `--no-web-resources-cdn`（CanvasKit 取 SDK 自带副本），并把 `web/fonts/`（`tool/web_fonts.py` 下载的 Roboto / Noto 回退字体）拷进 `build/web/fonts/`，配合 `web/flutter_bootstrap.js` 的 `fontFallbackBaseUrl: "fonts/"`。改 Web 构建相关配置后，用「阻断外网 + headless Chrome 截图」验证断网可正常渲染（做法见 README《Web 部署》）。
-- Android 导出图片走 `MediaStore`（`android/app/src/main/kotlin/.../MainActivity.kt` 的
-  `engineering_assistant/media_store` 通道），落盘位置必须和对话框「保存位置」一致；改动后用
-  `just emulator` + `just test-android` 在模拟器上验证，别退回写应用缓存目录。
 - 截图 / 离线演示一律用 `just shots`（内部就是 `just build-web`），不要用 `build-web-cdn`，否则内网或断网环境会白屏、文字变方块。
 - **不要给 justfile 写 shebang 配方**（`#!/usr/bin/env sh`）：Windows 上 just 会用 `cygpath` 翻译解释器路径，而 Git for Windows 默认没把 `usr/bin` 放进 PATH，会直接报 `could not find cygpath`。用普通配方 + 行尾 `\` 连接（见 `build-apk`）。

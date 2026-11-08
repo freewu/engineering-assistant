@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""从根目录的 logo.jpg / logo-android.jpg 生成各平台应用图标。
+"""从根目录的 logo.jpg 生成各平台应用图标。
 
 用法：
     python3 tool/generate_icons.py            # 生成（覆盖）全部图标
     python3 tool/generate_icons.py --check    # 只检查是否存在，不写入
 
-源图两份，按平台取用：
-    logo.jpg                Web / Windows
-    logo-android.jpg        Android（已按自适应图标构图，四周不留白，整张铺满）
+源图只有一份：logo.jpg，Web / Windows / Android 共用同一张。
 
 覆盖平台：
     web/      favicon.png + icons/Icon-*.png（含 maskable）
@@ -22,9 +20,8 @@
         不裁剪、不缩放构图，整张按原比例缩放到各平台尺寸；
     * 会被系统蒙版裁切的图层不能乱铺：
       - Web maskable：整张缩进 80% 安全区，外圈用源图底色补；
-      - Android 自适应前景：用 logo-android.jpg（本来就是满幅构图）直接铺满；
-        若把通用 logo 塞进来（透明底图形），则垫底色缩进 72dp 安全区，
-        因为 108dp 画布里只有中间 72dp 一定可见；
+      - Android 自适应前景：不透明底（满幅构图）直接铺满；透明底图形则垫底色
+        缩进 72dp 安全区，因为 108dp 画布里只有中间 72dp 一定可见；
     * 底色（maskable 外圈 / 自适应图标的 background）取源图四周一圈像素的平均色；
     * 生成脚本只依赖 Pillow，无需联网、不引入额外依赖。
 """
@@ -47,10 +44,8 @@ except ImportError:  # 直接跑脚本时也别只丢一个 ModuleNotFoundError
     )
 
 ROOT = Path(__file__).resolve().parent.parent
-# Web / Windows 用桌面版 logo
+# 所有平台共用同一张源图
 LOGO = ROOT / "logo.jpg"
-# Android 用手机版 logo：已经按自适应图标构图（满幅、四周不留白），可以直接铺满
-LOGO_ANDROID = ROOT / "logo-android.jpg"
 
 # 透明底 logo 的满幅图标底色（与 app 深色主题背景一致）
 BACKDROP = (11, 15, 20, 255)
@@ -224,9 +219,8 @@ def build_windows(logo: Logo) -> list[Path]:
 def adaptive_foreground(logo: Logo, size: int) -> Image.Image:
     """自适应图标前景（108dp）。
 
-    logo-android.jpg 这种不透明、四周不留白的源图是专门按 Android 构图的，
-    整张铺满即可（外圈本来就是要被蒙版裁掉的部分）；透明底的通用 logo 图形
-    只占中间，得缩进 72dp 安全区，否则会被启动器裁边。
+    不透明、四周不留白的源图（满幅构图）整张铺满即可，外圈本来就是要被蒙版
+    裁掉的部分；透明底的 logo 图形只占中间，得缩进 72dp 安全区，否则会被启动器裁边。
     """
     if logo.opaque:
         return resize(logo.image, size)
@@ -374,7 +368,7 @@ def selftest() -> None:
 def main() -> None:
     _force_utf8_stdout()
     parser = argparse.ArgumentParser(
-        description="从 logo.jpg / logo-android.jpg 生成各平台应用图标"
+        description="从 logo.jpg 生成各平台应用图标"
     )
     parser.add_argument(
         "--check",
@@ -393,7 +387,6 @@ def main() -> None:
         return
 
     logo = load_logo(LOGO)
-    android_logo = load_logo(LOGO_ANDROID)
 
     if args.check:
         expected = [
@@ -426,13 +419,8 @@ def main() -> None:
         print(f"✓ 图标齐全（{len(expected)} 个文件）")
         return
 
-    written = (
-        build_web(logo) + build_windows(logo) + build_android(android_logo)
-    )
-    print(
-        f"✓ 已根据 {LOGO.name}（Web / Windows）与 {LOGO_ANDROID.name}"
-        f"（Android）生成 {len(written)} 个图标文件"
-    )
+    written = build_web(logo) + build_windows(logo) + build_android(logo)
+    print(f"✓ 已根据 {LOGO.name} 生成 {len(written)} 个图标文件")
     for path in written:
         print(f"  · {path.relative_to(ROOT)}")
 

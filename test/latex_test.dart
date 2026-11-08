@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:engineering_assistant/core/latex.dart';
-import 'package:engineering_assistant/models/plot_function.dart';
 
 void main() {
   String latex(String source) {
@@ -83,49 +81,6 @@ void main() {
       expect(tryExpressionToLatex('   '), isNull);
       expect(tryExpressionToLatex('1+'), isNull);
       expect(tryExpressionToLatex('sin('), isNull);
-    });
-  });
-
-  group('LaTeX：绘图曲线', () {
-    PlotFunction make(
-      String expression, {
-      PlotMode mode = PlotMode.cartesian,
-      String secondExpression = '',
-    }) => PlotFunction(
-      id: 'f1',
-      color: const Color(0xFF66CCFF),
-      mode: mode,
-      expression: expression,
-      secondExpression: secondExpression,
-    );
-
-    test('直角坐标 / 极坐标 / 隐式方程', () {
-      expect(make('x^2').toLatex(), r'y = x^{2}');
-      expect(
-        make('1-cos(t)', mode: PlotMode.polar).toLatex(),
-        r'r = 1 - \cos\left(t\right)',
-      );
-      expect(
-        make('x^2+y^2-1', mode: PlotMode.implicit).toLatex(),
-        r'0 = x^{2} + y^{2} - 1',
-      );
-    });
-
-    test('参数方程用 cases 环境', () {
-      expect(
-        make(
-          'cos(t)',
-          mode: PlotMode.parametric,
-          secondExpression: 'sin(t)',
-        ).toLatex(),
-        r'\begin{cases} x = \cos\left(t\right) \\ y = \sin\left(t\right) \end{cases}',
-      );
-    });
-
-    test('表达式不完整时返回 null', () {
-      expect(make('').toLatex(), isNull);
-      expect(make('1+').toLatex(), isNull);
-      expect(make('cos(t)', mode: PlotMode.parametric).toLatex(), isNull);
     });
   });
 }

@@ -5,13 +5,7 @@ import 'package:engineering_assistant/core/builtins.dart';
 import 'package:engineering_assistant/l10n/app_i18n.dart';
 import 'package:engineering_assistant/l10n/calc_errors.dart';
 import 'package:engineering_assistant/l10n/calc_strings.dart';
-import 'package:engineering_assistant/l10n/plot_strings.dart';
 import 'package:engineering_assistant/l10n/app_language.dart';
-import 'package:engineering_assistant/models/plot_function.dart';
-import 'package:engineering_assistant/plot/plot_export.dart';
-import 'package:engineering_assistant/plot/plot_presets.dart';
-import 'package:engineering_assistant/plot/plot_viewport.dart';
-import 'package:engineering_assistant/state/plot_controller.dart';
 
 void main() {
   group('计算器页面文案', () {
@@ -159,91 +153,6 @@ void main() {
         isNotEmpty,
       );
       expect(calcErrorText(error), contains('boom'));
-    });
-  });
-
-  group('绘图页面文案', () {
-    test('五种语言都齐全', () {
-      for (final language in AppLanguage.values) {
-        expect(
-          kPlotStrings.containsKey(language),
-          isTrue,
-          reason: language.code,
-        );
-        final strings = kPlotStrings[language]!;
-        for (final mode in PlotMode.values) {
-          expect(strings.modeLabel(mode), isNotEmpty);
-          expect(strings.modeMenu(mode), isNotEmpty);
-          expect(strings.modeHint(mode), isNotEmpty);
-        }
-      }
-    });
-
-    test('曲线类型名称按语言区分', () {
-      final en = kPlotStrings[AppLanguage.en]!;
-      final zh = kPlotStrings[AppLanguage.zhHans]!;
-      expect(en.modeLabel(PlotMode.cartesian), 'Cartesian');
-      expect(en.modeLabel(PlotMode.implicit), 'Implicit');
-      expect(zh.modeLabel(PlotMode.cartesian), '直角坐标');
-      expect(en.modeHint(PlotMode.parametric), 'x(t) and y(t)');
-      expect(zh.modeHint(PlotMode.parametric), 'x(t) 与 y(t)');
-    });
-
-    test('示例曲线的名称与说明翻了四种语言，简体保持原文', () {
-      const translated = <AppLanguage>[
-        AppLanguage.zhHant,
-        AppLanguage.en,
-        AppLanguage.ja,
-        AppLanguage.es,
-      ];
-      for (final preset in kPlotPresets) {
-        expect(preset.nameIn(AppLanguage.zhHans), preset.name);
-        for (final language in translated) {
-          expect(
-            preset.names.containsKey(language),
-            isTrue,
-            reason: '${preset.name} 缺少 ${language.code} 名称',
-          );
-          expect(
-            preset.descriptions.containsKey(language),
-            isTrue,
-            reason: '${preset.name} 缺少 ${language.code} 说明',
-          );
-          expect(preset.nameIn(language), isNotEmpty);
-          expect(preset.descriptionIn(language), isNotEmpty);
-        }
-      }
-      final polar = kPlotPresets.firstWhere(
-        (preset) => preset.name == '心形 · 极坐标',
-      );
-      expect(polar.nameIn(AppLanguage.en), 'Heart · polar');
-      expect(polar.nameIn(AppLanguage.zhHant), '心形 · 極座標');
-      expect(polar.nameIn(AppLanguage.ja), 'ハート · 極座標');
-    });
-
-    test('示例缺项时回落简体原文', () {
-      const preset = PlotPreset(
-        name: '测试',
-        description: '说明',
-        names: <AppLanguage, String>{},
-        descriptions: <AppLanguage, String>{},
-        curves: <PresetCurve>[],
-        viewport: PlotViewport(minX: -1, maxX: 1, minY: -1, maxY: 1),
-      );
-      expect(preset.nameIn(AppLanguage.zhHant), '测试');
-      expect(preset.nameIn(AppLanguage.en), '测试');
-      expect(preset.descriptionIn(AppLanguage.es), '说明');
-    });
-
-    test('导出对话框的空状态文案可替换', () {
-      expect(describeSamples(const <PlotSample>[]), '暂无可见曲线');
-      expect(
-        describeSamples(
-          const <PlotSample>[],
-          empty: kPlotStrings[AppLanguage.en]!.noVisibleCurves,
-        ),
-        'No visible curves',
-      );
     });
   });
 }

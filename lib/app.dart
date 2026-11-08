@@ -11,17 +11,13 @@ class EngineeringAssistantApp extends StatefulWidget {
   const EngineeringAssistantApp({
     super.key,
     this.initialTab = 0,
-    this.initialPreset,
     this.initialTool,
     this.settings,
     this.deepLinkLanguage,
   });
 
-  /// 启动时展示的页面（Web 端可通过 ?page=plot 直达绘图页）。
+  /// 启动时展示的页面（Web 端可通过 ?page=tools / ?page=settings 直达）。
   final int initialTab;
-
-  /// 启动时载入的示例曲线下标（Web 端 ?preset=0）。
-  final int? initialPreset;
 
   /// 启动时直接打开的工具 id（Web 端 ?tool=distance），由工具页内嵌的
   /// Navigator 打开，外层导航菜单仍然保留。
@@ -126,7 +122,6 @@ class _EngineeringAssistantAppState extends State<EngineeringAssistantApp>
       home: HomePage(
         settings: _settings,
         initialTab: widget.initialTab,
-        initialPreset: widget.initialPreset,
         initialTool: widget.initialTool,
       ),
     );

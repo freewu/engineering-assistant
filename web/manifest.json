@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#0A0E14",
     "theme_color": "#0A0E14",
-    "description": "使用 Flutter 开发的工程人员计算工具集：表达式计算、函数绘图与单位换算。",
+    "description": "使用 Flutter 开发的工程人员计算工具集：表达式计算与单位换算。",
     "orientation": "any",
     "prefer_related_applications": false,
     "icons": [

@@ -82,9 +82,6 @@ shoot() {
 }
 
 shoot calculator 1440,900 "index.html"
-shoot plot       1440,900 "index.html?page=plot"
-shoot heart      1440,900 "index.html?page=plot&preset=0"
-shoot implicit   1440,900 "index.html?page=plot&preset=6"
 shoot tools      1440,900 "index.html?page=tools"
 shoot distance   1440,900 "index.html?page=tools&tool=distance"
 shoot area       1440,900 "index.html?page=tools&tool=area"

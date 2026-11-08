@@ -807,7 +807,6 @@ void main() {
         expect(strings.appTitle, isNotEmpty, reason: language.code);
         for (final text in [
           strings.navCalculator,
-          strings.navPlot,
           strings.navTools,
           strings.navSettings,
           strings.toolsTitle,

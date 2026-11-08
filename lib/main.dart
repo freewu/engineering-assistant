@@ -7,8 +7,8 @@ import 'state/settings_controller.dart';
 void main() {
   // 要在读平台语言之前初始化绑定，否则 Web 上拿不到 platformDispatcher。
   WidgetsFlutterBinding.ensureInitialized();
-  // Web 端支持 ?page=plot|tools|settings 直接打开对应页面，
-  // ?preset=0 载入第 1 个示例曲线，?tool=distance 直接打开长度换算，
+  // Web 端支持 ?page=tools|settings 直接打开对应页面，
+  // ?tool=distance 直接打开长度换算，
   // ?theme=light 用浅色启动，?lang=zh-Hant|en|ja|es 指定界面语言（截图与分享用）。
   final query = Uri.base.queryParameters;
   final page = query['page'];
@@ -24,14 +24,12 @@ void main() {
         themeMode: AppThemeMode.fromCode(query['theme']) ?? AppThemeMode.system,
       ),
       initialTab: switch (page) {
-        'plot' => 1,
-        'tools' => 2,
-        'settings' => 3,
+        'tools' => 1,
+        'settings' => 2,
         // 只带 ?tool=xxx 时也直接停在工具页
-        _ when query['tool'] != null => 2,
+        _ when query['tool'] != null => 1,
         _ => 0,
       },
-      initialPreset: int.tryParse(query['preset'] ?? ''),
       initialTool: query['tool'],
       deepLinkLanguage: deepLinkLanguage,
     ),

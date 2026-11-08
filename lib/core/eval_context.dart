@@ -4,7 +4,7 @@ import 'angle_mode.dart';
 
 /// 求值上下文：保存变量表、角度模式和随机数发生器。
 ///
-/// 同一个上下文可以在多次求值之间复用（例如 `ans` 变量、绘图时传入 `x`）。
+/// 同一个上下文可以在多次求值之间复用（例如 `ans` 变量、传入自定义变量）。
 class EvalContext {
   EvalContext({
     this.angleMode = AngleMode.radians,

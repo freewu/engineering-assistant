@@ -161,31 +161,5 @@ void main() {
       expect(formatNumber(double.infinity), '∞');
       expect(formatNumber(double.nan), 'NaN');
     });
-
-    test('金额格式（千分位）', () {
-      expect(formatMoney(1234567.891), '1,234,567.89');
-      expect(formatMoney(999.999), '1,000.00');
-      expect(formatMoney(-88, decimals: 0), '-88');
-      expect(formatMoney(0), '0.00');
-      expect(formatMoney(-0.0001), '0.00');
-      expect(formatMoney(12.5, decimals: 0), '13');
-    });
-
-    test('自动闭包求值（绘图用）', () {
-      final curve = engine.compileCurve('x^2');
-      expect(curve(3), 9);
-      expect(curve.dependsOnVariable(), isTrue);
-    });
-
-    test('二元闭包求值（隐式方程用）', () {
-      final surface = engine.compileSurface('(x^2+y^2-1)^3-x^2y^3');
-      // 隐式爱心上的两个点：(1, 0) 与 (0, 1)
-      expect(surface(1, 0), closeTo(0, 1e-12));
-      expect(surface(0, 1), closeTo(0, 1e-12));
-      expect(surface(0, 0), closeTo(-1, 1e-12));
-      expect(engine.compileSurface('x+y')(2, 3), 5);
-      // 变量表在多次调用之间复用，不会串值
-      expect(surface(0, 0), closeTo(-1, 1e-12));
-    });
   });
 }

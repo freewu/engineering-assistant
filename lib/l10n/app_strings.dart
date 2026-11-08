@@ -17,7 +17,6 @@ abstract class AppStrings {
 
   String get appTitle;
   String get navCalculator;
-  String get navPlot;
   String get navTools;
   String get navSettings;
 
@@ -87,8 +86,6 @@ class _ZhHansStrings extends AppStrings {
   @override
   String get navCalculator => '计算';
   @override
-  String get navPlot => '绘图';
-  @override
   String get navTools => '工具';
   @override
   String get navSettings => '设置';
@@ -151,7 +148,7 @@ class _ZhHansStrings extends AppStrings {
   @override
   String get settingsAbout => '关于';
   @override
-  String get aboutDescription => '表达式求值 + 2D 函数绘图 + 内置小工具，全部离线可用。';
+  String get aboutDescription => '表达式求值 + 内置单位换算工具，全部离线可用。';
   @override
   String get aboutVersion => '版本';
   @override
@@ -171,8 +168,6 @@ class _ZhHantStrings extends AppStrings {
   String get appTitle => '工程助手';
   @override
   String get navCalculator => '計算';
-  @override
-  String get navPlot => '繪圖';
   @override
   String get navTools => '工具';
   @override
@@ -236,7 +231,7 @@ class _ZhHantStrings extends AppStrings {
   @override
   String get settingsAbout => '關於';
   @override
-  String get aboutDescription => '表達式求值 + 2D 函式繪圖 + 內建小工具，全部離線可用。';
+  String get aboutDescription => '表達式求值 + 內建單位換算工具，全部離線可用。';
   @override
   String get aboutVersion => '版本';
   @override
@@ -256,8 +251,6 @@ class _EnStrings extends AppStrings {
   String get appTitle => 'Engineering Assistant';
   @override
   String get navCalculator => 'Calc';
-  @override
-  String get navPlot => 'Plot';
   @override
   String get navTools => 'Tools';
   @override
@@ -328,7 +321,7 @@ class _EnStrings extends AppStrings {
   String get settingsAbout => 'About';
   @override
   String get aboutDescription =>
-      'Expression evaluator, 2D function plotting and built-in tools, all offline.';
+      'Expression evaluator and built-in unit conversion tools, all offline.';
   @override
   String get aboutVersion => 'Version';
   @override
@@ -348,8 +341,6 @@ class _JaStrings extends AppStrings {
   String get appTitle => 'Engineering Assistant';
   @override
   String get navCalculator => '計算';
-  @override
-  String get navPlot => 'グラフ';
   @override
   String get navTools => 'ツール';
   @override
@@ -415,7 +406,7 @@ class _JaStrings extends AppStrings {
   @override
   String get settingsAbout => 'このアプリについて';
   @override
-  String get aboutDescription => '数式評価・2D 関数グラフ・内蔵ツール。すべてオフラインで使えます。';
+  String get aboutDescription => '数式評価と内蔵の単位換算ツール。すべてオフラインで使えます。';
   @override
   String get aboutVersion => 'バージョン';
   @override
@@ -435,8 +426,6 @@ class _EsStrings extends AppStrings {
   String get appTitle => 'Engineering Assistant';
   @override
   String get navCalculator => 'Cálculo';
-  @override
-  String get navPlot => 'Gráfica';
   @override
   String get navTools => 'Herramientas';
   @override
@@ -507,7 +496,7 @@ class _EsStrings extends AppStrings {
   String get settingsAbout => 'Acerca de';
   @override
   String get aboutDescription =>
-      'Evaluador de expresiones, gráficas 2D y herramientas integradas, todo sin conexión.';
+      'Evaluador de expresiones y herramientas de conversión de unidades, todo sin conexión.';
   @override
   String get aboutVersion => 'Versión';
   @override
