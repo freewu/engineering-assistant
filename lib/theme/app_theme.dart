@@ -151,6 +151,18 @@ abstract final class AppColors {
 
   static Color get textPrimary => _active.textPrimary;
   static Color get textSecondary => _active.textSecondary;
+
+  /// 强调色轮换表：给「常见参照物」这类并列的小标签上色，按下标循环取用。
+  ///
+  /// 全部取自当前配色的强调色，深浅两套主题都保证可读，不要在这里写死色值。
+  static List<Color> get accents => <Color>[
+    primary,
+    tertiary,
+    violet,
+    orange,
+    warning,
+    secondary,
+  ];
 }
 
 abstract final class AppTheme {

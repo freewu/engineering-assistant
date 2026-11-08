@@ -360,6 +360,12 @@ class _SamplesCard extends StatelessWidget {
   final VoidCallback onToggle;
   final ValueChanged<MeasureSample> onPick;
 
+  /// 第 [index] 个参照物用的强调色。
+  Color _accent(int index) {
+    final accents = AppColors.accents;
+    return accents[index % accents.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     return ToolSection(
@@ -389,11 +395,16 @@ class _SamplesCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                for (final sample in catalog.samples)
+                // 参照物按顺序轮换强调色，一眼能区分，也不至于全灰一片
+                for (final (index, sample) in catalog.samples.indexed)
                   ActionChip(
                     label: Text(
                       sample.labelIn(appLanguage),
-                      style: const TextStyle(fontSize: 11.5),
+                      style: TextStyle(fontSize: 11.5, color: _accent(index)),
+                    ),
+                    backgroundColor: _accent(index).withValues(alpha: 0.10),
+                    side: BorderSide(
+                      color: _accent(index).withValues(alpha: 0.32),
                     ),
                     visualDensity: VisualDensity.compact,
                     labelPadding: const EdgeInsets.symmetric(horizontal: 4),

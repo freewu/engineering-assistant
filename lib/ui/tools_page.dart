@@ -94,12 +94,13 @@ class _ToolsBody extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid.builder(
-        // 1440 宽时排 3 列（3 + 2），比 4 列留一张卡片在新一行更整齐
+        // 卡片只有图标 + 名称 + 卖点，宽度取 240：1440 宽时排 6 列，
+        // 手机（390）也能排下两列
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 480,
-          mainAxisExtent: 132,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+          maxCrossAxisExtent: 240,
+          mainAxisExtent: 84,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
         ),
         itemCount: tools.length,
         itemBuilder: (context, index) {
@@ -231,14 +232,14 @@ class _ToolCard extends StatelessWidget {
                 ).push(MaterialPageRoute<void>(builder: tool.pageBuilder)),
                 child: Padding(
                   // 右上角留给图钉，文字别顶到它下面
-                  padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                   child: Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(11),
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -250,48 +251,37 @@ class _ToolCard extends StatelessWidget {
                         ),
                         child: Icon(
                           tool.icon,
-                          size: 25,
+                          size: 20,
                           color: AppColors.onPrimary,
                         ),
                       ),
-                      const SizedBox(width: 13),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(right: 22),
+                              padding: const EdgeInsets.only(right: 20),
                               child: Text(
                                 tool.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 13.5,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 2),
                             Text(
                               tool.tagline,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: tool.color,
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              tool.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11.5,
-                                height: 1.35,
                               ),
                             ),
                           ],
@@ -299,7 +289,7 @@ class _ToolCard extends StatelessWidget {
                       ),
                       Icon(
                         Icons.chevron_right_rounded,
-                        size: 18,
+                        size: 16,
                         color: AppColors.textSecondary,
                       ),
                     ],

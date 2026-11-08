@@ -4,18 +4,15 @@ import '../../l10n/app_i18n.dart';
 import '../../l10n/app_language.dart';
 import '../../state/app_appearance.dart';
 
-/// 一张工具卡片的三段文案：名称、卖点、说明。
+/// 一张工具卡片的文案：名称与卖点。
 @immutable
 class ToolText {
-  const ToolText(this.name, this.tagline, this.description);
+  const ToolText(this.name, this.tagline);
 
   final String name;
 
   /// 一句话卖点，显示在卡片标题下方。
   final String tagline;
-
-  /// 更长的说明，卡片里最多两行。
-  final String description;
 }
 
 /// 工具页里一张「应用卡片」的元数据。
@@ -59,7 +56,6 @@ class ToolInfo {
 
   String get name => text.name;
   String get tagline => text.tagline;
-  String get description => text.description;
 
   /// 打开工具页面：外面包一层 [ListenableBuilder] 监听
   /// [appAppearanceRevision]，切主题 / 语言时已压栈的页面也会重建。

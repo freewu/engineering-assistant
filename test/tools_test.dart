@@ -858,7 +858,6 @@ void main() {
           expect(text, isNotNull, reason: '${tool.id} 缺 ${language.code}');
           expect(text!.name, isNotEmpty);
           expect(text.tagline, isNotEmpty);
-          expect(text.description, isNotEmpty);
         }
       }
       expect(kTools.length, 8);
