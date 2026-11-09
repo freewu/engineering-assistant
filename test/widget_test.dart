@@ -1349,31 +1349,25 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    // 全空：不计算
-    expect(find.text('—'), findsOneWidget);
-
-    // 柱：0.5 × 0.5 × 3 = 0.75 m³
-    await input('concrete-column', '0.5', index: 0);
-    await input('concrete-column', '0.5', index: 1);
-    await input('concrete-column', '3', index: 2);
+    // 默认值直接出结果：柱 0.5 × 0.5 × 3 = 0.75 m³
     expect(find.text('0.75 m³'), findsOneWidget);
     expect(find.text('V = 0.5 m × 0.5 m × 3 m = 0.75 m³'), findsOneWidget);
 
-    // 梁：0.25 × 0.5 × 6 = 0.75 m³
+    // 清空柱高：不计算
+    await input('concrete-column', '', index: 2);
+    expect(find.text('—'), findsOneWidget);
+    await input('concrete-column', '4', index: 2);
+    expect(find.text('V = 0.5 m × 0.5 m × 4 m = 1 m³'), findsOneWidget);
+    await input('concrete-column', '3', index: 2);
+
+    // 梁：默认 0.25 × 0.5 × 6 = 0.75 m³
     await tester.tap(find.widgetWithText(Tab, '梁'));
     await tester.pumpAndSettle();
-    expect(find.text('—'), findsOneWidget);
-    await input('concrete-beam', '0.25', index: 0);
-    await input('concrete-beam', '0.5', index: 1);
-    await input('concrete-beam', '6', index: 2);
     expect(find.text('V = 0.25 m × 0.5 m × 6 m = 0.75 m³'), findsOneWidget);
 
-    // 板：6 × 4 × 0.12 = 2.88 m³，没有孔洞时不带扣减项
+    // 板：默认 6 × 4 × 0.12 = 2.88 m³，没有孔洞时不带扣减项
     await tester.tap(find.widgetWithText(Tab, '板'));
     await tester.pumpAndSettle();
-    await input('concrete-slab', '6', index: 0);
-    await input('concrete-slab', '4', index: 1);
-    await input('concrete-slab', '0.12', index: 2);
     expect(find.text('2.88 m³'), findsOneWidget);
     expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
 
@@ -1390,19 +1384,14 @@ void main() {
       findsOneWidget,
     );
 
-    // 墙：5 × 3 × 0.2 = 3 m³
+    // 墙：默认 5 × 3 × 0.2 = 3 m³
     await tester.tap(find.widgetWithText(Tab, '墙'));
     await tester.pumpAndSettle();
-    await input('concrete-wall', '5', index: 0);
-    await input('concrete-wall', '3', index: 1);
-    await input('concrete-wall', '0.2', index: 2);
     expect(find.text('V = 5 m × 3 m × 0.2 m = 3 m³'), findsOneWidget);
 
-    // 楼梯：12 ㎡ × 0.25 m = 3 m³，清空后不算
+    // 楼梯：默认 12 ㎡ × 0.25 m = 3 m³，清空后不算
     await tester.tap(find.widgetWithText(Tab, '楼梯'));
     await tester.pumpAndSettle();
-    await input('concrete-stair', '12', index: 0);
-    await input('concrete-stair', '0.25', index: 1);
     expect(find.text('V = 12 ㎡ × 0.25 m = 3 m³'), findsOneWidget);
     await input('concrete-stair', '', index: 1);
     expect(find.text('—'), findsOneWidget);
@@ -1418,6 +1407,45 @@ void main() {
     await tester.tap(find.widgetWithText(Tab, '板'));
     await tester.pumpAndSettle();
     expect(find.text('2.82 m³'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('设置里可以把混凝土构件默认 tab 改成「板」', (tester) async {
+    tester.view.physicalSize = const Size(1440, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final store = _MemoryStore();
+    final settings = SettingsController(store: store);
+    await tester.pumpWidget(
+      EngineeringAssistantApp(settings: settings, initialTab: 2),
+    );
+    await tester.pumpAndSettle();
+
+    final select = find.byKey(const Key('settings-concrete-tab'));
+    await tester.scrollUntilVisible(
+      select,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(select);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('板').last);
+    await tester.pumpAndSettle();
+    expect(store.values['concrete.tab'], '2');
+
+    // 打开混凝土构件：直接停在板，默认值已经算好
+    await tester.pumpWidget(
+      EngineeringAssistantApp(
+        settings: settings,
+        key: UniqueKey(),
+        initialTab: 1,
+        initialTool: 'concrete',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('2.88 m³'), findsOneWidget);
+    expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 

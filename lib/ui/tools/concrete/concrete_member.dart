@@ -17,6 +17,9 @@ const double kStairThicknessMax = 0.3;
 /// 楼梯折算厚度常用值。
 const double kDefaultStairThickness = 0.25;
 
+/// 页面上的构件 tab 数量（柱 / 梁 / 板 / 墙 / 楼梯）。
+const int kConcreteTabCount = 5;
+
 /// 矩形柱：V = a × b × H（H 多用基础顶面至梁底）。
 double columnVolume({
   required double sectionA,

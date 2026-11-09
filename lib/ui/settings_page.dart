@@ -6,6 +6,7 @@ import '../l10n/app_language.dart';
 import '../state/settings_controller.dart';
 import '../theme/app_theme.dart';
 import 'tools/area/setting.dart';
+import 'tools/concrete/setting.dart';
 import 'tools/distance/setting.dart';
 import 'tools/energy/setting.dart';
 import 'tools/pressure/setting.dart';
@@ -111,6 +112,13 @@ class SettingsPage extends StatelessWidget {
                 PressureSetting(controller: controller),
                 const SizedBox(height: 12),
                 SpeedSetting(controller: controller),
+                const SizedBox(height: 18),
+                SettingsSectionHeader(
+                  title: t.settingsEngineering,
+                  hint: t.settingsEngineeringHint,
+                ),
+                const SizedBox(height: 10),
+                ConcreteSetting(controller: controller),
                 const SizedBox(height: 12),
                 SettingsCard(
                   icon: Icons.info_outline_rounded,

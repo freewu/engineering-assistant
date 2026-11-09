@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/number_format.dart';
 import '../../../l10n/app_i18n.dart';
 import '../../../state/app_appearance.dart';
+import '../../../state/settings_controller.dart';
 import '../../../theme/app_theme.dart';
 import '../tool_draft.dart';
 import '../widgets/tool_field.dart';
@@ -27,34 +28,43 @@ class _ConcreteMemberPageState extends State<ConcreteMemberPage>
     with SingleTickerProviderStateMixin, AppAppearanceAware {
   late final ToolDraft _draft = ToolDraft('concrete');
 
+  /// 上次停留的 tab 优先，其次用设置页里选的默认 tab。
   late final TabController _tabs = TabController(
-    length: 5,
-    initialIndex: (_draft.integer('tab') ?? 0).clamp(0, 4),
+    length: kConcreteTabCount,
+    initialIndex: (_draft.integer('tab') ?? currentSettings?.concreteTab ?? 0)
+        .clamp(0, kConcreteTabCount - 1),
     vsync: this,
   )..addListener(_onTabChanged);
 
+  // 数值都带一个常用默认值（还是可以清空，清空就不计算）
   // 矩形柱：a / b / H
-  late final TextEditingController _columnA = _draft.controller('columnA', '');
-  late final TextEditingController _columnB = _draft.controller('columnB', '');
-  late final TextEditingController _columnH = _draft.controller('columnH', '');
+  late final TextEditingController _columnA = _draft.controller(
+    'columnA',
+    '0.5',
+  );
+  late final TextEditingController _columnB = _draft.controller(
+    'columnB',
+    '0.5',
+  );
+  late final TextEditingController _columnH = _draft.controller('columnH', '3');
 
   // 矩形梁：a / b / L
-  late final TextEditingController _beamA = _draft.controller('beamA', '');
-  late final TextEditingController _beamB = _draft.controller('beamB', '');
-  late final TextEditingController _beamL = _draft.controller('beamL', '');
+  late final TextEditingController _beamA = _draft.controller('beamA', '0.25');
+  late final TextEditingController _beamB = _draft.controller('beamB', '0.5');
+  late final TextEditingController _beamL = _draft.controller('beamL', '6');
 
-  // 现浇板：净长 / 净宽 / 板厚 / 孔洞面积（可空）
+  // 现浇板：净长 / 净宽 / 板厚 / 孔洞面积（默认没有孔洞）
   late final TextEditingController _slabLength = _draft.controller(
     'slabLength',
-    '',
+    '6',
   );
   late final TextEditingController _slabWidth = _draft.controller(
     'slabWidth',
-    '',
+    '4',
   );
   late final TextEditingController _slabThickness = _draft.controller(
     'slabThickness',
-    '',
+    '0.12',
   );
   late final TextEditingController _holeArea = _draft.controller(
     'holeArea',
@@ -64,25 +74,25 @@ class _ConcreteMemberPageState extends State<ConcreteMemberPage>
   // 混凝土墙：墙长 / 墙高 / 墙厚
   late final TextEditingController _wallLength = _draft.controller(
     'wallLength',
-    '',
+    '5',
   );
   late final TextEditingController _wallHeight = _draft.controller(
     'wallHeight',
-    '',
+    '3',
   );
   late final TextEditingController _wallThickness = _draft.controller(
     'wallThickness',
-    '',
+    '0.2',
   );
 
   // 楼梯：水平投影面积 / 折算厚度
   late final TextEditingController _stairArea = _draft.controller(
     'stairArea',
-    '',
+    '12',
   );
   late final TextEditingController _stairThickness = _draft.controller(
     'stairThickness',
-    '',
+    '0.25',
   );
 
   ConcreteStrings get _s => concreteStrings;

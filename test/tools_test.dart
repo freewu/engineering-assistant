@@ -617,6 +617,37 @@ void main() {
       expect(reloaded.language, AppLanguage.es);
     });
 
+    test('混凝土构件默认 tab：默认柱，存入 concrete.tab 并清掉草稿里的 tab', () async {
+      final store = _MemoryStore();
+      final settings = SettingsController(store: store);
+      expect(settings.concreteTab, 0);
+
+      // 先让草稿记住用户停在了「墙」，再改默认值：草稿的 tab 会被清掉
+      settings.setToolDraftValue('concrete', 'tab', '3');
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await settings.setConcreteTab(2);
+      expect(settings.concreteTab, 2);
+      expect(store.values['concrete.tab'], '2');
+      expect(settings.toolDraftOf('concrete').containsKey('tab'), isFalse);
+
+      // 越界按边界收
+      await settings.setConcreteTab(9);
+      expect(settings.concreteTab, kConcreteTabCount - 1);
+      await settings.setConcreteTab(-3);
+      expect(settings.concreteTab, 0);
+
+      await settings.setConcreteTab(4);
+      final reloaded = SettingsController(store: store);
+      await reloaded.load();
+      expect(reloaded.concreteTab, 4);
+
+      // 存了脏数据时回到 0
+      store.values['concrete.tab'] = 'wall';
+      final fallback = SettingsController(store: store);
+      await fallback.load();
+      expect(fallback.concreteTab, 0);
+    });
+
     test('存了无法识别的值时保持默认', () async {
       final store = _MemoryStore()
         ..values['theme_mode'] = 'neon'

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../l10n/app_language.dart';
 import '../services/settings_store.dart';
 import '../theme/app_theme.dart';
+import '../ui/tools/concrete/concrete_member.dart';
 import '../ui/tools/unit_catalog.dart';
 
 /// 当前生效的设置控制器。
@@ -50,6 +51,9 @@ class SettingsController extends ChangeNotifier {
   static const String _languageKey = 'language';
   static const String _pinnedToolsKey = 'pinned_tools';
   static const String _pinnedLimitKey = 'pinned_limit';
+
+  /// 混凝土构件打开时默认展示的 tab（0 柱、1 梁、2 板、3 墙、4 楼梯）。
+  static const String _concreteTabKey = 'concrete.tab';
 
   /// 置顶工具数量下限。
   static const int minPinnedTools = 2;
@@ -98,6 +102,9 @@ class SettingsController extends ChangeNotifier {
   /// 各工具页上次填的输入（工具 id → 字段 → 值），重新进入时填回。
   final Map<String, Map<String, String>> toolDrafts =
       <String, Map<String, String>>{};
+
+  /// 混凝土构件默认展示的 tab 下标。
+  int concreteTab = 0;
 
   /// 各工具的历史记录（工具 id → 记录，最近的在前，每条是一段 JSON）。
   ///
@@ -156,6 +163,14 @@ class SettingsController extends ChangeNotifier {
         pinnedTools
           ..clear()
           ..addAll(ids);
+        changed = true;
+      }
+    }
+    final storedConcreteTab = int.tryParse(values[_concreteTabKey] ?? '');
+    if (storedConcreteTab != null) {
+      final index = storedConcreteTab.clamp(0, kConcreteTabCount - 1);
+      if (index != concreteTab) {
+        concreteTab = index;
         changed = true;
       }
     }
@@ -249,6 +264,16 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     await clearToolDraft(catalogId, field: 'from');
     await _store.write('$_convertPrefix$catalogId.tab', system.code);
+  }
+
+  /// 设置混凝土构件默认展示的 tab，并清掉草稿里记住的 tab 让它生效。
+  Future<void> setConcreteTab(int index) async {
+    final next = index.clamp(0, kConcreteTabCount - 1);
+    if (next == concreteTab) return;
+    concreteTab = next;
+    notifyListeners();
+    await clearToolDraft('concrete', field: 'tab');
+    await _store.write(_concreteTabKey, '$next');
   }
 
   /// 某个工具是否已置顶。

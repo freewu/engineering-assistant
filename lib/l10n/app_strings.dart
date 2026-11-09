@@ -66,6 +66,9 @@ abstract class AppStrings {
   String get settingsConvertSystem;
   String get settingsConvertTab;
   String get settingsConvertUnit;
+  String get settingsEngineering;
+  String get settingsEngineeringHint;
+  String get settingsDefaultTab;
   String get systemMetric;
   String get systemImperial;
   String get systemChinese;
@@ -139,6 +142,12 @@ class _ZhHansStrings extends AppStrings {
   String get settingsConvertUnit => '默认单位';
   @override
   String get settingsConvertTab => '结果 tab';
+  @override
+  String get settingsEngineering => '工程计算默认值';
+  @override
+  String get settingsEngineeringHint => '打开工具时默认展示哪一类构件；每个工具各记一套。';
+  @override
+  String get settingsDefaultTab => '默认标签页';
   @override
   String get systemMetric => '公制';
   @override
@@ -222,6 +231,12 @@ class _ZhHantStrings extends AppStrings {
   String get settingsConvertUnit => '預設單位';
   @override
   String get settingsConvertTab => '結果分頁';
+  @override
+  String get settingsEngineering => '工程計算預設值';
+  @override
+  String get settingsEngineeringHint => '開啟工具時預設展示哪一類構件；每個工具各記一套。';
+  @override
+  String get settingsDefaultTab => '預設分頁';
   @override
   String get systemMetric => '公制';
   @override
@@ -312,6 +327,13 @@ class _EnStrings extends AppStrings {
   @override
   String get settingsConvertTab => 'Result tab';
   @override
+  String get settingsEngineering => 'Engineering defaults';
+  @override
+  String get settingsEngineeringHint =>
+      'Which member type a tool opens on. Stored per tool.';
+  @override
+  String get settingsDefaultTab => 'Default tab';
+  @override
   String get systemMetric => 'Metric';
   @override
   String get systemImperial => 'Imperial';
@@ -397,6 +419,12 @@ class _JaStrings extends AppStrings {
   String get settingsConvertUnit => '既定の単位';
   @override
   String get settingsConvertTab => '結果タブ';
+  @override
+  String get settingsEngineering => '工学計算の既定値';
+  @override
+  String get settingsEngineeringHint => 'ツールを開いたときに表示する部材の種類を記憶します（ツールごと）。';
+  @override
+  String get settingsDefaultTab => '既定のタブ';
   @override
   String get systemMetric => 'メートル法';
   @override
@@ -486,6 +514,13 @@ class _EsStrings extends AppStrings {
   String get settingsConvertUnit => 'Unidad predeterminada';
   @override
   String get settingsConvertTab => 'Pestaña de resultados';
+  @override
+  String get settingsEngineering => 'Valores de obra';
+  @override
+  String get settingsEngineeringHint =>
+      'Tipo de elemento que muestra cada herramienta al abrirse.';
+  @override
+  String get settingsDefaultTab => 'Pestaña inicial';
   @override
   String get systemMetric => 'Métrico';
   @override
