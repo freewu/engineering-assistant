@@ -13,6 +13,8 @@ import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
+import 'package:engineering_assistant/ui/tools/earthwork/earthwork.dart';
+import 'package:engineering_assistant/ui/tools/earthwork/earthwork_strings.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
 import 'package:engineering_assistant/ui/tools/tool_tabs.dart';
 import 'package:engineering_assistant/ui/tools/pressure/pressure.dart';
@@ -625,6 +627,7 @@ void main() {
         'material': kMaterialTabCount,
         'building_area': kBuildingTabCount,
         'concrete': kConcreteTabCount,
+        'earthwork': kEarthworkTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1169,6 +1172,118 @@ void main() {
     });
   });
 
+  group('土石方工程量', () {
+    test('场地平整：首层外围长 × 宽，±30 cm 以内才算平整', () {
+      expect(siteLevelingArea(30, 20), 600);
+      expect(siteLevelingArea(12.5, 8), 100);
+      expect(siteLevelingArea(0, 20), 0);
+      expect(kLevelingTolerance, 0.3);
+    });
+
+    test('基坑 / 基槽：V = (a + 2c) × (b + 2c) × H，清单不加放坡', () {
+      // 默认工作面 600 mm：垫层 6 × 4 m、挖深 3 m
+      expect(kDefaultWorkFace, 0.6);
+      expect(
+        excavationVolume(length: 6, width: 4, depth: 3),
+        closeTo(112.32, 1e-9),
+      );
+      // 工作面留空（c = 0）时就是垫层面积 × 挖深
+      expect(
+        excavationVolume(length: 6, width: 4, depth: 3, workFace: 0),
+        closeTo(72, 1e-9),
+      );
+      // 工作面按图纸放大到 1 m
+      expect(
+        excavationVolume(length: 6, width: 4, depth: 3, workFace: 1),
+        closeTo(8 * 6 * 3, 1e-9),
+      );
+      // 基槽：长 20 m、宽 1.2 m、深 2 m
+      expect(
+        excavationVolume(length: 20, width: 1.2, depth: 2),
+        closeTo(21.2 * 2.4 * 2, 1e-9),
+      );
+    });
+
+    test('管沟土方：V =（管外径 + 2c）× H × L，有 / 无垫层同一个式子', () {
+      expect(
+        pipeTrenchVolume(pipeDiameter: 0.5, depth: 1.5, length: 50),
+        closeTo(127.5, 1e-9),
+      );
+      expect(
+        pipeTrenchVolume(
+          pipeDiameter: 0.5,
+          depth: 1.5,
+          length: 50,
+          workFace: 0,
+        ),
+        closeTo(37.5, 1e-9),
+      );
+      // 工作面放大到 1 m：管沟净宽 2.5 m
+      expect(
+        pipeTrenchVolume(
+          pipeDiameter: 0.5,
+          depth: 1.5,
+          length: 50,
+          workFace: 1,
+        ),
+        closeTo(187.5, 1e-9),
+      );
+      // 长度按 0 算不出负数
+      expect(pipeTrenchVolume(pipeDiameter: 0.5, depth: 1.5, length: 0), 0);
+    });
+
+    test('五种语言的「土石方工程」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kEarthworkStrings, language);
+        for (final text in <String>[
+          s.tabLeveling,
+          s.tabExcavation,
+          s.tabTrench,
+          s.levelingSection,
+          s.buildingLength,
+          s.buildingWidth,
+          s.levelingResult,
+          s.levelingFormula,
+          s.levelingHint,
+          s.excavationSection,
+          s.baseLength,
+          s.baseWidth,
+          s.workFace,
+          s.depth,
+          s.excavationResult,
+          s.excavationFormula,
+          s.excavationHint,
+          s.trenchSection,
+          s.pipeDiameter,
+          s.pipeLength,
+          s.trenchResult,
+          s.trenchFormula,
+          s.trenchHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 模板占位数量要对得上：场地平整 3 个；基坑 6 个（工作面 `{1}` 出现
+        // 两次）；管沟 5 个。两者最后一个是体积。
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.levelingFormula).length,
+          3,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.excavationFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.trenchFormula).length,
+          5,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1198,14 +1313,15 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 材料用量 + 建筑面积 + 混凝土构件在所有界面语言下都展示', () {
+    test('八个换算工具 + 材料用量 + 建筑面积 + 混凝土构件 + 土石方在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 11, reason: language.code);
+        expect(visibleTools.length, 12, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
           'concrete',
+          'earthwork',
           'distance',
           'area',
           'volume',
@@ -1219,7 +1335,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 11);
+      expect(kTools.length, 12);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1233,7 +1349,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 11);
+      expect(kTools.length, 12);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

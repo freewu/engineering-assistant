@@ -1,5 +1,6 @@
 import 'building/building_area.dart';
 import 'concrete/concrete_member.dart';
+import 'earthwork/earthwork.dart';
 import 'material/material.dart';
 
 /// 带 tab 的工具各自有几个 tab。
@@ -10,4 +11,5 @@ const Map<String, int> kToolTabCounts = <String, int>{
   'material': kMaterialTabCount,
   'building_area': kBuildingTabCount,
   'concrete': kConcreteTabCount,
+  'earthwork': kEarthworkTabCount,
 };

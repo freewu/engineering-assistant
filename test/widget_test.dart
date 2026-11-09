@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('11 個のアプリ'), findsOneWidget);
+    expect(find.text('12 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1480,7 +1480,120 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件的默认 tab', (tester) async {
+  testWidgets('土石方工程：三个 tab 按清单规则算，默认值直接出结果', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final settings = SettingsController(store: _MemoryStore());
+    await tester.pumpWidget(
+      EngineeringAssistantApp(
+        settings: settings,
+        initialTab: 1,
+        initialTool: 'earthwork',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['场地平整', '基坑基槽', '管沟土方']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    Future<void> input(String section, String value, {int index = 0}) async {
+      await tester.enterText(
+        find
+            .descendant(
+              of: find.byKey(Key(section)),
+              matching: find.byType(TextField),
+            )
+            .at(index),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // 场地平整：30 m × 20 m = 600 ㎡
+    expect(find.text('600 m²'), findsOneWidget);
+    expect(find.text('S = 30 m × 20 m = 600 m²'), findsOneWidget);
+    await input('earthwork-leveling', '25', index: 0);
+    expect(find.text('S = 25 m × 20 m = 500 m²'), findsOneWidget);
+    // 清空就不算
+    await input('earthwork-leveling', '', index: 0);
+    expect(find.text('—'), findsOneWidget);
+    await input('earthwork-leveling', '30', index: 0);
+
+    // 基坑：默认工作面 600 mm，(6 + 1.2) × (4 + 1.2) × 3 = 112.32 m³
+    await tester.tap(find.widgetWithText(Tab, '基坑基槽'));
+    await tester.pumpAndSettle();
+    expect(find.text('112.32 m³'), findsOneWidget);
+    expect(
+      find.text('V = (6 m + 2 × 0.6 m) × (4 m + 2 × 0.6 m) × 3 m = 112.32 m³'),
+      findsOneWidget,
+    );
+    // 工作面留空按清单默认 600 mm 算，结果不变
+    await input('earthwork-excavation', '', index: 2);
+    expect(find.text('112.32 m³'), findsOneWidget);
+    // 图纸要求工作面 1 m → (8) × (6) × 3 = 144 m³
+    await input('earthwork-excavation', '1', index: 2);
+    expect(find.text('144 m³'), findsOneWidget);
+    expect(
+      find.text('V = (6 m + 2 × 1 m) × (4 m + 2 × 1 m) × 3 m = 144 m³'),
+      findsOneWidget,
+    );
+    // 挖深清空 → 不计算
+    await input('earthwork-excavation', '', index: 3);
+    expect(find.text('—'), findsOneWidget);
+    await input('earthwork-excavation', '3', index: 3);
+    await input('earthwork-excavation', '0.6', index: 2);
+    expect(find.text('112.32 m³'), findsOneWidget);
+
+    // 管沟：默认 (0.5 + 1.2) × 1.5 × 50 = 127.5 m³
+    await tester.tap(find.widgetWithText(Tab, '管沟土方'));
+    await tester.pumpAndSettle();
+    expect(find.text('127.5 m³'), findsOneWidget);
+    expect(
+      find.text('V = (0.5 m + 2 × 0.6 m) × 1.5 m × 50 m = 127.5 m³'),
+      findsOneWidget,
+    );
+    // 管外径清空 → 不计算；长度加到 100 m 翻倍
+    await input('earthwork-trench', '', index: 0);
+    expect(find.text('—'), findsOneWidget);
+    await input('earthwork-trench', '0.5', index: 0);
+    await input('earthwork-trench', '100', index: 1);
+    expect(find.text('255 m³'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // 退出再进来：还停在管沟 tab，填过的数值都在
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('土石方工程'));
+    await tester.pumpAndSettle();
+    expect(find.text('255 m³'), findsOneWidget);
+    await tester.tap(find.widgetWithText(Tab, '场地平整'));
+    await tester.pumpAndSettle();
+    expect(find.text('600 m²'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('土石方工程：手机尺寸下三个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'earthwork'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['管沟土方', '基坑基槽', '场地平整']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+    expect(find.byType(NavigationBar), findsOneWidget);
+  });
+
+  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方的默认 tab', (tester) async {
     tester.view.physicalSize = const Size(1440, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1508,9 +1621,11 @@ void main() {
     await pick('material', '水泥');
     await pick('building_area', '车棚');
     await pick('concrete', '板');
+    await pick('earthwork', '管沟土方');
     expect(store.values['material.tab'], '2');
     expect(store.values['building_area.tab'], '5');
     expect(store.values['concrete.tab'], '2');
+    expect(store.values['earthwork.tab'], '2');
 
     // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
     Future<void> open(String toolId) async {
@@ -1532,6 +1647,8 @@ void main() {
     await open('concrete');
     expect(find.text('2.88 m³'), findsOneWidget);
     expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
+    await open('earthwork');
+    expect(find.text('127.5 m³'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 
