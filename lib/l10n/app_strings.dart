@@ -112,7 +112,7 @@ class _ZhHansStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count 个应用';
   @override
-  String get toolsSearchHint => '搜索工具名称或卖点';
+  String get toolsSearchHint => '搜索工具名称';
   @override
   String get toolsSearchResults => '搜索结果';
   @override
@@ -211,7 +211,7 @@ class _ZhHantStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count 個應用';
   @override
-  String get toolsSearchHint => '搜尋工具名稱或特色';
+  String get toolsSearchHint => '搜尋工具名稱';
   @override
   String get toolsSearchResults => '搜尋結果';
   @override
@@ -310,7 +310,7 @@ class _EnStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count apps';
   @override
-  String get toolsSearchHint => 'Search by name or description';
+  String get toolsSearchHint => 'Search tool name';
   @override
   String get toolsSearchResults => 'Results';
   @override
@@ -418,7 +418,7 @@ class _JaStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count 個のアプリ';
   @override
-  String get toolsSearchHint => 'ツール名や説明で検索';
+  String get toolsSearchHint => 'ツール名で検索';
   @override
   String get toolsSearchResults => '検索結果';
   @override
@@ -519,7 +519,7 @@ class _EsStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count aplicaciones';
   @override
-  String get toolsSearchHint => 'Buscar por nombre o descripción';
+  String get toolsSearchHint => 'Buscar nombre de la herramienta';
   @override
   String get toolsSearchResults => 'Resultados';
   @override
