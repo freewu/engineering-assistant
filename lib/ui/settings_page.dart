@@ -6,8 +6,10 @@ import '../l10n/app_language.dart';
 import '../state/settings_controller.dart';
 import '../theme/app_theme.dart';
 import 'tools/area/setting.dart';
+import 'tools/building/setting.dart';
 import 'tools/concrete/setting.dart';
 import 'tools/distance/setting.dart';
+import 'tools/material/setting.dart';
 import 'tools/energy/setting.dart';
 import 'tools/pressure/setting.dart';
 import 'tools/speed/setting.dart';
@@ -118,6 +120,10 @@ class SettingsPage extends StatelessWidget {
                   hint: t.settingsEngineeringHint,
                 ),
                 const SizedBox(height: 10),
+                MaterialSetting(controller: controller),
+                const SizedBox(height: 12),
+                BuildingAreaSetting(controller: controller),
+                const SizedBox(height: 12),
                 ConcreteSetting(controller: controller),
                 const SizedBox(height: 12),
                 SettingsCard(

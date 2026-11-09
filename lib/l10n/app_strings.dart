@@ -27,6 +27,19 @@ abstract class AppStrings {
   String toolsCount(int count);
 
   /// 工具页「置顶」分区的小标题。
+  /// 工具页搜索框的提示语。
+  String get toolsSearchHint;
+
+  /// 工具页搜索时的分区标题。
+  String get toolsSearchResults;
+
+  /// 搜索没有结果时的标题与说明。
+  String get toolsSearchEmpty;
+  String get toolsSearchEmptyHint;
+
+  /// 搜索框里清空按钮的提示。
+  String get toolsSearchClear;
+
   String get toolsPinned;
 
   /// 工具页「其他工具」分区的小标题。
@@ -99,6 +112,16 @@ class _ZhHansStrings extends AppStrings {
   @override
   String toolsCount(int count) => '$count 个应用';
   @override
+  String get toolsSearchHint => '搜索工具名称或卖点';
+  @override
+  String get toolsSearchResults => '搜索结果';
+  @override
+  String get toolsSearchEmpty => '没有匹配的工具';
+  @override
+  String get toolsSearchEmptyHint => '换个关键词试试，或者点右边的叉清空搜索框。';
+  @override
+  String get toolsSearchClear => '清空搜索';
+  @override
   String get toolsPinned => '置顶工具';
   @override
   String get toolsOthers => '其他工具';
@@ -145,7 +168,7 @@ class _ZhHansStrings extends AppStrings {
   @override
   String get settingsEngineering => '工程计算默认值';
   @override
-  String get settingsEngineeringHint => '打开工具时默认展示哪一类构件；每个工具各记一套。';
+  String get settingsEngineeringHint => '打开工具时默认展示哪个标签页；每个工具各记一套。';
   @override
   String get settingsDefaultTab => '默认标签页';
   @override
@@ -187,6 +210,16 @@ class _ZhHantStrings extends AppStrings {
   String get toolsOffline => '全部內建，離線可用';
   @override
   String toolsCount(int count) => '$count 個應用';
+  @override
+  String get toolsSearchHint => '搜尋工具名稱或特色';
+  @override
+  String get toolsSearchResults => '搜尋結果';
+  @override
+  String get toolsSearchEmpty => '沒有符合的工具';
+  @override
+  String get toolsSearchEmptyHint => '換個關鍵字試試，或點右邊的叉清空搜尋框。';
+  @override
+  String get toolsSearchClear => '清空搜尋';
   @override
   String get toolsPinned => '置頂工具';
   @override
@@ -234,7 +267,7 @@ class _ZhHantStrings extends AppStrings {
   @override
   String get settingsEngineering => '工程計算預設值';
   @override
-  String get settingsEngineeringHint => '開啟工具時預設展示哪一類構件；每個工具各記一套。';
+  String get settingsEngineeringHint => '開啟工具時預設展示哪個分頁；每個工具各記一套。';
   @override
   String get settingsDefaultTab => '預設分頁';
   @override
@@ -276,6 +309,17 @@ class _EnStrings extends AppStrings {
   String get toolsOffline => 'All built in, works offline';
   @override
   String toolsCount(int count) => '$count apps';
+  @override
+  String get toolsSearchHint => 'Search by name or description';
+  @override
+  String get toolsSearchResults => 'Results';
+  @override
+  String get toolsSearchEmpty => 'No matching tools';
+  @override
+  String get toolsSearchEmptyHint =>
+      'Try another keyword, or tap the cross to clear the search.';
+  @override
+  String get toolsSearchClear => 'Clear search';
   @override
   String get toolsPinned => 'Pinned';
   @override
@@ -330,7 +374,7 @@ class _EnStrings extends AppStrings {
   String get settingsEngineering => 'Engineering defaults';
   @override
   String get settingsEngineeringHint =>
-      'Which member type a tool opens on. Stored per tool.';
+      'Which tab a tool opens on. Stored per tool.';
   @override
   String get settingsDefaultTab => 'Default tab';
   @override
@@ -373,6 +417,16 @@ class _JaStrings extends AppStrings {
   String get toolsOffline => 'すべて内蔵、オフラインで動作';
   @override
   String toolsCount(int count) => '$count 個のアプリ';
+  @override
+  String get toolsSearchHint => 'ツール名や説明で検索';
+  @override
+  String get toolsSearchResults => '検索結果';
+  @override
+  String get toolsSearchEmpty => '該当するツールがありません';
+  @override
+  String get toolsSearchEmptyHint => '別のキーワードを試すか、右の × で検索をクリアしてください。';
+  @override
+  String get toolsSearchClear => '検索をクリア';
   @override
   String get toolsPinned => 'ピン留め';
   @override
@@ -422,7 +476,7 @@ class _JaStrings extends AppStrings {
   @override
   String get settingsEngineering => '工学計算の既定値';
   @override
-  String get settingsEngineeringHint => 'ツールを開いたときに表示する部材の種類を記憶します（ツールごと）。';
+  String get settingsEngineeringHint => 'ツールを開いたときに表示するタブを記憶します（ツールごと）。';
   @override
   String get settingsDefaultTab => '既定のタブ';
   @override
@@ -464,6 +518,17 @@ class _EsStrings extends AppStrings {
   String get toolsOffline => 'Todo integrado, funciona sin conexión';
   @override
   String toolsCount(int count) => '$count aplicaciones';
+  @override
+  String get toolsSearchHint => 'Buscar por nombre o descripción';
+  @override
+  String get toolsSearchResults => 'Resultados';
+  @override
+  String get toolsSearchEmpty => 'Ninguna herramienta coincide';
+  @override
+  String get toolsSearchEmptyHint =>
+      'Prueba con otra palabra o toca la cruz para limpiar la búsqueda.';
+  @override
+  String get toolsSearchClear => 'Limpiar búsqueda';
   @override
   String get toolsPinned => 'Fijados';
   @override
@@ -518,7 +583,7 @@ class _EsStrings extends AppStrings {
   String get settingsEngineering => 'Valores de obra';
   @override
   String get settingsEngineeringHint =>
-      'Tipo de elemento que muestra cada herramienta al abrirse.';
+      'Pestaña con la que se abre cada herramienta.';
   @override
   String get settingsDefaultTab => 'Pestaña inicial';
   @override

@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../l10n/app_language.dart';
 import '../services/settings_store.dart';
 import '../theme/app_theme.dart';
-import '../ui/tools/concrete/concrete_member.dart';
+import '../ui/tools/tool_tabs.dart';
 import '../ui/tools/unit_catalog.dart';
 
 /// 当前生效的设置控制器。
@@ -52,8 +52,8 @@ class SettingsController extends ChangeNotifier {
   static const String _pinnedToolsKey = 'pinned_tools';
   static const String _pinnedLimitKey = 'pinned_limit';
 
-  /// 混凝土构件打开时默认展示的 tab（0 柱、1 梁、2 板、3 墙、4 楼梯）。
-  static const String _concreteTabKey = 'concrete.tab';
+  /// 工具默认 tab 的键后缀，完整键如 `building_area.tab`。
+  static const String _tabSuffix = '.tab';
 
   /// 置顶工具数量下限。
   static const int minPinnedTools = 2;
@@ -103,8 +103,8 @@ class SettingsController extends ChangeNotifier {
   final Map<String, Map<String, String>> toolDrafts =
       <String, Map<String, String>>{};
 
-  /// 混凝土构件默认展示的 tab 下标。
-  int concreteTab = 0;
+  /// 各工具默认展示的 tab 下标（工具 id → 下标），只有带 tab 的工具用得到。
+  final Map<String, int> toolTabs = <String, int>{};
 
   /// 各工具的历史记录（工具 id → 记录，最近的在前，每条是一段 JSON）。
   ///
@@ -166,13 +166,18 @@ class SettingsController extends ChangeNotifier {
         changed = true;
       }
     }
-    final storedConcreteTab = int.tryParse(values[_concreteTabKey] ?? '');
-    if (storedConcreteTab != null) {
-      final index = storedConcreteTab.clamp(0, kConcreteTabCount - 1);
-      if (index != concreteTab) {
-        concreteTab = index;
-        changed = true;
-      }
+    for (final entry in values.entries) {
+      // <工具 id>.tab
+      if (!entry.key.endsWith(_tabSuffix)) continue;
+      final id = entry.key.substring(0, entry.key.length - _tabSuffix.length);
+      final count = kToolTabCounts[id];
+      if (count == null) continue;
+      final stored = int.tryParse(entry.value);
+      if (stored == null) continue;
+      final index = stored.clamp(0, count - 1);
+      if (toolTabs[id] == index) continue;
+      toolTabs[id] = index;
+      changed = true;
     }
     final storedLimit = int.tryParse(values[_pinnedLimitKey] ?? '');
     if (storedLimit != null && storedLimit != pinnedLimit) {
@@ -266,14 +271,23 @@ class SettingsController extends ChangeNotifier {
     await _store.write('$_convertPrefix$catalogId.tab', system.code);
   }
 
-  /// 设置混凝土构件默认展示的 tab，并清掉草稿里记住的 tab 让它生效。
-  Future<void> setConcreteTab(int index) async {
-    final next = index.clamp(0, kConcreteTabCount - 1);
-    if (next == concreteTab) return;
-    concreteTab = next;
+  /// 某个工具默认展示的 tab 下标；没存过、或不是带 tab 的工具时为 0。
+  int toolTabFor(String toolId) {
+    final count = kToolTabCounts[toolId];
+    if (count == null) return 0;
+    return (toolTabs[toolId] ?? 0).clamp(0, count - 1);
+  }
+
+  /// 设置某个工具默认展示的 tab，并清掉草稿里记住的 tab 让它立刻生效。
+  Future<void> setToolTab(String toolId, int index) async {
+    final count = kToolTabCounts[toolId];
+    if (count == null) return;
+    final next = index.clamp(0, count - 1);
+    if (next == toolTabFor(toolId) && toolTabs.containsKey(toolId)) return;
+    toolTabs[toolId] = next;
     notifyListeners();
-    await clearToolDraft('concrete', field: 'tab');
-    await _store.write(_concreteTabKey, '$next');
+    await clearToolDraft(toolId, field: 'tab');
+    await _store.write('$toolId$_tabSuffix', '$next');
   }
 
   /// 某个工具是否已置顶。

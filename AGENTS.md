@@ -59,7 +59,7 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
 - 新增工具或换算单位时同步更新 README 的功能列表与测试数量。
 - **工具页置顶**：卡片右上角的图钉（`lib/ui/tools_page.dart` 的 `_PinButton`）切换置顶，状态存
   `SettingsController.pinnedTools`（键 `pinned_tools`），上限 `pinnedLimit`（键 `pinned_limit`，
-  2 ~ 5，默认 3，设置页的 `lib/ui/tools/tools_setting.dart` 负责调）。工具页自己套
+  2 ~ 5，默认 3，设置页的 `lib/ui/tools/tools_setting.dart` 负责调）。工具页标题下方有搜索框（`_ToolsBody` 是 StatefulWidget，按当前语言的名称与卖点过滤，搜索时不显示置顶分区）。工具页自己套
   `ListenableBuilder(listenable: currentSettings)` 监听设置：它活在内嵌 Navigator 的路由里，
   外层 `setState` 不会重跑路由 builder；重建时**不要返回 const 子树**，否则切语言 / 配色不刷新。
   新增工具的 `ToolInfo` 只需在 `kTools` 里追加，置顶、语言过滤都自动生效。
@@ -72,7 +72,7 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   当「不计算」处理：结果显示「—」，合计跳过它，不要自己填回默认值。
   设置页改默认值（`setConvertSystem`、`setConvertTab`、`setConvertUnit` 等）必须调 `clearToolDraft()`
   清掉对应草稿，否则旧数值会被新单位解释。
-- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要配置项的工具才建 `setting.dart`（材料用量 / 建筑面积这类纯计算页没有设置项）。混凝土构件的 `setting.dart` 里是「默认标签页」（键 `concrete.tab`），改完要调 `clearToolDraft(id, field: 'tab')` 把草稿里记住的 tab 清掉，新默认值才能立刻生效。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
+- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要配置项的工具才建 `setting.dart`。带 tab 的工具（材料用量 / 建筑面积 / 混凝土构件）各写一个包一层公共外壳 `lib/ui/tools/widgets/tool_tab_setting.dart`，只传工具 id 与 tab 名称表；值存在 `<工具 id>.tab`，改完要调 `clearToolDraft(id, field: 'tab')` 把草稿里记住的 tab 清掉，新默认值才能立刻生效。`SettingsController` 里的通用逻辑（`toolTabFor` / `setToolTab`）靠 `lib/ui/tools/tool_tabs.dart` 的 `kToolTabCounts` 兜住越界值，新增带 tab 的工具在那里加一行。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
 - **工具的历史记录走通用接口**：需要「和历史比对」的工具不要自己写存储，
   统一调 `SettingsController` 的 `addToolHistory(toolId, entry, {limit})` /
   `toolHistoryOf(toolId)` / `removeToolHistory(toolId, index)` / `clearToolHistory(toolId)`，

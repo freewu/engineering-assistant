@@ -11,9 +11,10 @@ import 'package:engineering_assistant/ui/tools/building/building_area.dart';
 import 'package:engineering_assistant/ui/tools/building/building_area_strings.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
+import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
-import 'package:engineering_assistant/ui/tools/material/material.dart';
+import 'package:engineering_assistant/ui/tools/tool_tabs.dart';
 import 'package:engineering_assistant/ui/tools/pressure/pressure.dart';
 import 'package:engineering_assistant/ui/tools/speed/speed.dart';
 import 'package:engineering_assistant/ui/tools/temperature/temperature.dart';
@@ -617,35 +618,51 @@ void main() {
       expect(reloaded.language, AppLanguage.es);
     });
 
-    test('混凝土构件默认 tab：默认柱，存入 concrete.tab 并清掉草稿里的 tab', () async {
+    test('工具默认 tab：按工具各存一份，越界按边界收，改完清掉草稿里的 tab', () async {
       final store = _MemoryStore();
       final settings = SettingsController(store: store);
-      expect(settings.concreteTab, 0);
+      expect(kToolTabCounts, <String, int>{
+        'material': kMaterialTabCount,
+        'building_area': kBuildingTabCount,
+        'concrete': kConcreteTabCount,
+      });
+      for (final id in kToolTabCounts.keys) {
+        expect(settings.toolTabFor(id), 0, reason: id);
+      }
+      // 不带 tab 的工具没有默认 tab
+      expect(settings.toolTabFor('distance'), 0);
 
       // 先让草稿记住用户停在了「墙」，再改默认值：草稿的 tab 会被清掉
       settings.setToolDraftValue('concrete', 'tab', '3');
       await Future<void>.delayed(const Duration(milliseconds: 500));
-      await settings.setConcreteTab(2);
-      expect(settings.concreteTab, 2);
+      await settings.setToolTab('concrete', 2);
+      expect(settings.toolTabFor('concrete'), 2);
       expect(store.values['concrete.tab'], '2');
       expect(settings.toolDraftOf('concrete').containsKey('tab'), isFalse);
 
-      // 越界按边界收
-      await settings.setConcreteTab(9);
-      expect(settings.concreteTab, kConcreteTabCount - 1);
-      await settings.setConcreteTab(-3);
-      expect(settings.concreteTab, 0);
+      // 三个工具互不影响，越界按边界收
+      await settings.setToolTab('material', 3);
+      await settings.setToolTab('building_area', 9);
+      expect(settings.toolTabFor('material'), kMaterialTabCount - 1);
+      expect(settings.toolTabFor('building_area'), kBuildingTabCount - 1);
+      await settings.setToolTab('concrete', -3);
+      expect(settings.toolTabFor('concrete'), 0);
+      // 不带 tab 的工具直接忽略
+      await settings.setToolTab('distance', 2);
+      expect(store.values.containsKey('distance.tab'), isFalse);
 
-      await settings.setConcreteTab(4);
+      await settings.setToolTab('building_area', 4);
       final reloaded = SettingsController(store: store);
       await reloaded.load();
-      expect(reloaded.concreteTab, 4);
+      expect(reloaded.toolTabFor('material'), 3);
+      expect(reloaded.toolTabFor('building_area'), 4);
+      expect(reloaded.toolTabFor('concrete'), 0);
 
       // 存了脏数据时回到 0
       store.values['concrete.tab'] = 'wall';
       final fallback = SettingsController(store: store);
       await fallback.load();
-      expect(fallback.concreteTab, 0);
+      expect(fallback.toolTabFor('concrete'), 0);
     });
 
     test('存了无法识别的值时保持默认', () async {

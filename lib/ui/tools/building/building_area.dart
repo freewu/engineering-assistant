@@ -8,6 +8,9 @@ library;
 /// 算全面积的结构高度门槛（m）：≥ 2.2 m 算全面积，不足算 1/2。
 const double kFullAreaHeight = 2.2;
 
+/// 页面上的 tab 数量（单层 / 多层 / 阳台 / 雨篷 / 门斗 / 车棚货棚）。
+const int kBuildingTabCount = 6;
+
 /// 无柱雨篷需要达到的宽度（m）：宽度 > 2.1 m 才计算建筑面积。
 const double kCanopyMinWidth = 2.1;
 

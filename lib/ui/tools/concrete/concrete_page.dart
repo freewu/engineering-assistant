@@ -31,8 +31,9 @@ class _ConcreteMemberPageState extends State<ConcreteMemberPage>
   /// 上次停留的 tab 优先，其次用设置页里选的默认 tab。
   late final TabController _tabs = TabController(
     length: kConcreteTabCount,
-    initialIndex: (_draft.integer('tab') ?? currentSettings?.concreteTab ?? 0)
-        .clamp(0, kConcreteTabCount - 1),
+    initialIndex:
+        (_draft.integer('tab') ?? currentSettings?.toolTabFor('concrete') ?? 0)
+            .clamp(0, kConcreteTabCount - 1),
     vsync: this,
   )..addListener(_onTabChanged);
 

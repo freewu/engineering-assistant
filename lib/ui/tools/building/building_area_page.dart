@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/number_format.dart';
 import '../../../l10n/app_i18n.dart';
 import '../../../state/app_appearance.dart';
+import '../../../state/settings_controller.dart';
 import '../../../theme/app_theme.dart';
 import '../tool_draft.dart';
 import '../widgets/tool_field.dart';
@@ -27,48 +28,53 @@ class _BuildingAreaPageState extends State<BuildingAreaPage>
     with SingleTickerProviderStateMixin, AppAppearanceAware {
   late final ToolDraft _draft = ToolDraft('building_area');
 
+  /// 上次停留的 tab 优先，其次用设置页里选的默认 tab。
   late final TabController _tabs = TabController(
-    length: 6,
-    initialIndex: (_draft.integer('tab') ?? 0).clamp(0, 5),
+    length: kBuildingTabCount,
+    initialIndex:
+        (_draft.integer('tab') ??
+                currentSettings?.toolTabFor('building_area') ??
+                0)
+            .clamp(0, kBuildingTabCount - 1),
     vsync: this,
   )..addListener(_onTabChanged);
 
-  // 数值一律默认为空：没填的项就不计算，结果与合计都跳过它
+  // 数值都带一个常用默认值（还是可以清空，清空的项不计算，合计也跳过它）
   // 单层建筑：L / B / 结构高度
-  late final TextEditingController _length = _draft.controller('length', '');
-  late final TextEditingController _width = _draft.controller('width', '');
-  late final TextEditingController _height = _draft.controller('height', '');
+  late final TextEditingController _length = _draft.controller('length', '10');
+  late final TextEditingController _width = _draft.controller('width', '8');
+  late final TextEditingController _height = _draft.controller('height', '3.6');
 
   // 多层建筑：层数 / 每层面积
-  late final TextEditingController _floors = _draft.controller('floors', '');
+  late final TextEditingController _floors = _draft.controller('floors', '3');
   late final TextEditingController _perFloor = _draft.controller(
     'perFloor',
-    '',
+    '80',
   );
 
   // 阳台
-  late final TextEditingController _balcony = _draft.controller('balcony', '');
+  late final TextEditingController _balcony = _draft.controller('balcony', '4');
 
   // 雨篷：投影面积 / 外挑宽度 / 有柱无柱
-  late final TextEditingController _canopy = _draft.controller('canopy', '');
+  late final TextEditingController _canopy = _draft.controller('canopy', '6');
   late final TextEditingController _canopyWidth = _draft.controller(
     'canopyWidth',
-    '',
+    '2.4',
   );
   late bool _hasColumns = _draft.flag('hasColumns');
 
   // 门斗：围护面积 / 结构层高
   late final TextEditingController _vestibule = _draft.controller(
     'vestibule',
-    '',
+    '3',
   );
   late final TextEditingController _vestibuleHeight = _draft.controller(
     'vestibuleHeight',
-    '',
+    '2.4',
   );
 
   // 车棚 / 货棚
-  late final TextEditingController _shed = _draft.controller('shed', '');
+  late final TextEditingController _shed = _draft.controller('shed', '20');
 
   BuildingAreaStrings get _s => buildingAreaStrings;
 

@@ -56,6 +56,9 @@ const double kSandRate = 0.05;
 /// 砖块数量（块）：墙体体积（m³）× 每立方米砖数。
 double brickCount(double volume, BrickType type) => volume * type.perCubicMeter;
 
+/// 页面上的 tab 数量（砖块 / 混凝土 / 水泥 / 砂子）。
+const int kMaterialTabCount = 4;
+
 /// 每平方米砖数校核（块）：砌体面积（㎡）× 该墙厚的每平方米砖数。
 double bricksByWall(double area, WallThickness wall) =>
     area * wall.perSquareMeter;

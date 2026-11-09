@@ -10,6 +10,7 @@ import 'tools/tool_catalog.dart';
 ///
 /// 卡片右上角的图钉可以把工具置顶，置顶的工具排在页面上方；
 /// 最多能置顶几个由设置页的「置顶数量」决定（2 ~ 5，默认 3）。
+/// 标题下方的搜索框按名称与卖点过滤（大小写不敏感），搜索时不再分置顶 / 其他。
 class ToolsPage extends StatelessWidget {
   const ToolsPage({super.key});
 
@@ -25,8 +26,43 @@ class ToolsPage extends StatelessWidget {
   }
 }
 
-class _ToolsBody extends StatelessWidget {
+class _ToolsBody extends StatefulWidget {
   const _ToolsBody();
+
+  @override
+  State<_ToolsBody> createState() => _ToolsBodyState();
+}
+
+class _ToolsBodyState extends State<_ToolsBody> {
+  final TextEditingController _search = TextEditingController();
+
+  /// 当前的搜索关键词（原样保存，比较时再转小写）。
+  String _query = '';
+
+  bool get _searching => _query.trim().isNotEmpty;
+
+  /// 按名称与卖点过滤，关键词前后空格忽略、大小写不敏感。
+  List<ToolInfo> get _matched {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return visibleTools;
+    return <ToolInfo>[
+      for (final tool in visibleTools)
+        if (tool.name.toLowerCase().contains(query) ||
+            tool.tagline.toLowerCase().contains(query))
+          tool,
+    ];
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _search.clear();
+    setState(() => _query = '');
+  }
 
   Future<void> _togglePin(BuildContext context, ToolInfo tool) async {
     final settings = currentSettings;
@@ -58,13 +94,26 @@ class _ToolsBody extends StatelessWidget {
       (pinnedIds.contains(tool.id) ? pinned : others).add(tool);
     }
 
+    final matched = _matched;
     return Column(
       children: [
         _buildHeader(),
+        _buildSearchBar(),
         Expanded(
           child: CustomScrollView(
             slivers: [
-              if (pinned.isNotEmpty) ...[
+              if (_searching) ...[
+                if (matched.isEmpty)
+                  _emptyResults()
+                else ...[
+                  _sectionHeader(
+                    icon: Icons.search_rounded,
+                    title: t.toolsSearchResults,
+                    trailing: t.toolsCount(matched.length),
+                  ),
+                  _grid(matched, pinned: false, onTogglePin: _togglePin),
+                ],
+              ] else if (pinned.isNotEmpty) ...[
                 _sectionHeader(
                   icon: Icons.push_pin_rounded,
                   title: t.toolsPinned,
@@ -76,13 +125,115 @@ class _ToolsBody extends StatelessWidget {
                   title: t.toolsOthers,
                   trailing: t.toolsCount(others.length),
                 ),
-              ],
-              _grid(others, pinned: false, onTogglePin: _togglePin),
+                _grid(others, pinned: false, onTogglePin: _togglePin),
+              ] else
+                _grid(others, pinned: false, onTogglePin: _togglePin),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+      child: TextField(
+        key: const Key('tools-search'),
+        controller: _search,
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(fontSize: 13),
+        onChanged: (value) => setState(() => _query = value),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.surface,
+          hintText: t.toolsSearchHint,
+          hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 17,
+            color: AppColors.textSecondary,
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 38),
+          suffixIcon: _searching
+              ? IconButton(
+                  key: const Key('tools-search-clear'),
+                  tooltip: t.toolsSearchClear,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: _clearSearch,
+                )
+              : null,
+          suffixIconConstraints: const BoxConstraints(minWidth: 38),
+          contentPadding: const EdgeInsets.symmetric(vertical: 11),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppColors.textSecondary.withValues(alpha: 0.22),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: AppColors.textSecondary.withValues(alpha: 0.22),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 搜不到时的空态：说明 + 清空按钮。
+  Widget _emptyResults() {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 34,
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              t.toolsSearchEmpty,
+              key: const Key('tools-search-empty'),
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              t.toolsSearchEmptyHint,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11.5,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: _clearSearch,
+              icon: const Icon(Icons.close_rounded, size: 15),
+              label: Text(t.toolsSearchClear),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

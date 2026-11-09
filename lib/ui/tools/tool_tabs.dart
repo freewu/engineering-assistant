@@ -1,0 +1,13 @@
+import 'building/building_area.dart';
+import 'concrete/concrete_member.dart';
+import 'material/material.dart';
+
+/// 带 tab 的工具各自有几个 tab。
+///
+/// 设置页存「默认 tab」时用它兜住越界值（键 `<工具 id>.tab`），新增带 tab 的
+/// 工具时在这里加一行即可。
+const Map<String, int> kToolTabCounts = <String, int>{
+  'material': kMaterialTabCount,
+  'building_area': kBuildingTabCount,
+  'concrete': kConcreteTabCount,
+};

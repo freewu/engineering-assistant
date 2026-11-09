@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/number_format.dart';
 import '../../../l10n/app_i18n.dart';
 import '../../../state/app_appearance.dart';
+import '../../../state/settings_controller.dart';
 import '../../../theme/app_theme.dart';
 import '../tool_draft.dart';
 import '../widgets/tool_field.dart';
@@ -28,20 +29,23 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
   late final ToolDraft _draft = ToolDraft('material');
 
   /// 四个 tab：砖块 / 混凝土 / 水泥 / 砂子。
+  /// 上次停留的 tab 优先，其次用设置页里选的默认 tab。
   late final TabController _tabs = TabController(
-    length: 4,
-    initialIndex: (_draft.integer('tab') ?? 0).clamp(0, 3),
+    length: kMaterialTabCount,
+    initialIndex:
+        (_draft.integer('tab') ?? currentSettings?.toolTabFor('material') ?? 0)
+            .clamp(0, kMaterialTabCount - 1),
     vsync: this,
   )..addListener(_onTabChanged);
 
-  // 数值一律默认为空：空着的项就不计算，结果显示「—」
+  // 数值都带一个常用默认值（还是可以清空，清空就不计算）
   late final TextEditingController _brickVolume = _draft.controller(
     'brickVolume',
-    '',
+    '10',
   );
   late final TextEditingController _concreteArea = _draft.controller(
     'concreteArea',
-    '',
+    '20',
   );
   late final TextEditingController _concreteThickness = _draft.controller(
     'concreteThickness',
@@ -49,11 +53,11 @@ class _MaterialUsagePageState extends State<MaterialUsagePage>
   );
   late final TextEditingController _cementArea = _draft.controller(
     'cementArea',
-    '1',
+    '20',
   );
   late final TextEditingController _sandArea = _draft.controller(
     'sandArea',
-    '1',
+    '20',
   );
 
   late BrickType _brickType =
