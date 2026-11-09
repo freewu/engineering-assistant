@@ -1,6 +1,7 @@
 import 'building/building_area.dart';
 import 'concrete/concrete_member.dart';
 import 'earthwork/earthwork.dart';
+import 'masonry/masonry.dart';
 import 'material/material.dart';
 import 'rebar/rebar.dart';
 
@@ -14,4 +15,5 @@ const Map<String, int> kToolTabCounts = <String, int>{
   'concrete': kConcreteTabCount,
   'earthwork': kEarthworkTabCount,
   'rebar': kRebarTabCount,
+  'masonry': kMasonryTabCount,
 };

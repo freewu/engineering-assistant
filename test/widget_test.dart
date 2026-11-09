@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('13 個のアプリ'), findsOneWidget);
+    expect(find.text('14 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1658,7 +1658,88 @@ void main() {
     }
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋的默认 tab', (tester) async {
+  testWidgets('砌筑工程：砖墙 / 砖基础 / 特殊墙体按清单规则算体积', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'masonry'),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['砖墙', '砖基础', '特殊墙体']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    // 砖墙：(10 × 3 − 6) × 0.24 − 0 = 5.76 m³
+    expect(find.text('5.76 m³'), findsOneWidget);
+    expect(find.text('V = (10 × 3 − 6) × 0.24 − 0 = 5.76 m³'), findsOneWidget);
+
+    // 砖基础：0.24 × (1.2 + 0.197) × (30 + 20) = 16.764 m³
+    await tester.tap(find.widgetWithText(Tab, '砖基础'));
+    await tester.pumpAndSettle();
+    expect(find.text('16.764 m³'), findsOneWidget);
+
+    // 特殊墙体：空斗墙按外形体积 10 × 3 × 0.24 = 7.2 m³
+    await tester.tap(find.widgetWithText(Tab, '特殊墙体'));
+    await tester.pumpAndSettle();
+    expect(find.text('7.2 m³'), findsOneWidget);
+    expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('砌筑工程：多孔砖墙扣孔洞，空斗墙不扣', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'masonry'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(Tab, '特殊墙体'));
+    await tester.pumpAndSettle();
+
+    // 默认空斗墙：没有「孔洞体积」输入框，也不扣空洞
+    expect(find.text('孔洞体积'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('masonry-special-type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('多孔砖墙').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('孔洞体积'), findsOneWidget);
+    expect(find.text('V = 10 × 3 × 0.24 − 0 = 7.2 m³'), findsOneWidget);
+
+    await tester.enterText(find.text('0').last, '0.6');
+    await tester.pumpAndSettle();
+    expect(find.text('6.6 m³'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('砌筑工程：手机尺寸下三个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'masonry'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['特殊墙体', '砖基础', '砖墙']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑的默认 tab', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1440, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1688,11 +1769,13 @@ void main() {
     await pick('concrete', '板');
     await pick('earthwork', '管沟土方');
     await pick('rebar', '速查表');
+    await pick('masonry', '特殊墙体');
     expect(store.values['material.tab'], '2');
     expect(store.values['building_area.tab'], '5');
     expect(store.values['concrete.tab'], '2');
     expect(store.values['earthwork.tab'], '2');
     expect(store.values['rebar.tab'], '3');
+    expect(store.values['masonry.tab'], '2');
 
     // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
     Future<void> open(String toolId) async {
@@ -1718,6 +1801,8 @@ void main() {
     expect(find.text('127.5 m³'), findsOneWidget);
     await open('rebar');
     expect(find.text('3.85 kg/m'), findsOneWidget);
+    await open('masonry');
+    expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 

@@ -4,7 +4,7 @@
 
 ## 项目速览
 
-- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度）+ 材料用量估算（砖块 / 混凝土 / 水泥 / 砂子四个 tab）+ 建筑面积计算（单层 / 多层 / 阳台 / 雨篷 / 门斗 / 车棚货棚六个 tab）+ 混凝土构件工程量（柱 / 梁 / 板 / 墙 / 楼梯五个 tab，按体积算）+ 土石方工程量（场地平整 / 基坑基槽 / 管沟土方三个 tab，按 GB/T 50854-2024 清单规则算）+ 钢筋工程量（直钢筋 / 箍筋 / 弯起钢筋 + 速查表，算中心线长度与质量），支持 Web / Windows / Android。
+- **engineering-assistant**（应用名「工程助手」）：面向工程人员的 Flutter 计算工具集——表达式计算 + 八个单位换算工具（长度 / 面积 / 容量 / 重量 / 温度 / 热量 / 压力 / 速度）+ 材料用量估算（砖块 / 混凝土 / 水泥 / 砂子四个 tab）+ 建筑面积计算（单层 / 多层 / 阳台 / 雨篷 / 门斗 / 车棚货棚六个 tab）+ 混凝土构件工程量（柱 / 梁 / 板 / 墙 / 楼梯五个 tab，按体积算）+ 土石方工程量（场地平整 / 基坑基槽 / 管沟土方三个 tab，按 GB/T 50854-2024 清单规则算）+ 钢筋工程量（直钢筋 / 箍筋 / 弯起钢筋 + 速查表，算中心线长度与质量）+ 砌筑工程量（砖墙 / 砖基础 / 特殊墙体，按体积算），支持 Web / Windows / Android。
 - **只保留工程类工具**：健康（BMI / 基础代谢）、理财（复利 / 利率 / 贷款）、社保（养老金 / 退休 / 个税）类工具已从本仓库移除，不要加回来；新增工具要贴合工程计算。
 - 应用图标来源是根目录的 `logo.jpg`（Web / Windows / Android 共用），脚本整张等比缩放、不裁剪，由 `just icons` 生成各平台图标。
 - 表达式解析与求值：`lib/core/math_engine.dart`（自研词法 + 递归下降，无第三方计算库）。
@@ -72,7 +72,7 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   当「不计算」处理：结果显示「—」，合计跳过它，不要自己填回默认值。
   设置页改默认值（`setConvertSystem`、`setConvertTab`、`setConvertUnit` 等）必须调 `clearToolDraft()`
   清掉对应草稿，否则旧数值会被新单位解释。
-- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要配置项的工具才建 `setting.dart`。带 tab 的工具（材料用量 / 建筑面积 / 混凝土构件 / 土石方工程 / 钢筋工程）各写一个包一层公共外壳 `lib/ui/tools/widgets/tool_tab_setting.dart`，只传工具 id 与 tab 名称表；值存在 `<工具 id>.tab`，改完要调 `clearToolDraft(id, field: 'tab')` 把草稿里记住的 tab 清掉，新默认值才能立刻生效。`SettingsController` 里的通用逻辑（`toolTabFor` / `setToolTab`）靠 `lib/ui/tools/tool_tabs.dart` 的 `kToolTabCounts` 兜住越界值，新增带 tab 的工具在那里加一行。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
+- **工具相关设置**放在 `lib/ui/tools/<tool>/setting.dart`，由设置页引用；设置项本身存在 `SettingsController`，页面用不到 `BuildContext` 时读全局 `currentSettings`。只有需要配置项的工具才建 `setting.dart`。带 tab 的工具（材料用量 / 建筑面积 / 混凝土构件 / 土石方工程 / 钢筋工程 / 砌筑工程）各写一个包一层公共外壳 `lib/ui/tools/widgets/tool_tab_setting.dart`，只传工具 id 与 tab 名称表；值存在 `<工具 id>.tab`，改完要调 `clearToolDraft(id, field: 'tab')` 把草稿里记住的 tab 清掉，新默认值才能立刻生效。`SettingsController` 里的通用逻辑（`toolTabFor` / `setToolTab`）靠 `lib/ui/tools/tool_tabs.dart` 的 `kToolTabCounts` 兜住越界值，新增带 tab 的工具在那里加一行。八个单位换算工具各自有 `<tool>/setting.dart`（`LengthSetting`、`AreaSetting`…），只包一层公共外壳 `lib/ui/tools/widgets/convert_setting_card.dart`（默认体系 + 结果 tab 两个下拉框），存储键是 `convert.<工具 id>.system` / `convert.<工具 id>.tab`，`UnitConvertPage` 读同一份值；温度 / 热量 / 压力不分体系，卡片里只有「默认单位」（键 `convert.<工具 id>.unit`）。
 - **工具的历史记录走通用接口**：需要「和历史比对」的工具不要自己写存储，
   统一调 `SettingsController` 的 `addToolHistory(toolId, entry, {limit})` /
   `toolHistoryOf(toolId)` / `removeToolHistory(toolId, index)` / `clearToolHistory(toolId)`，

@@ -11,6 +11,8 @@ import 'package:engineering_assistant/ui/tools/building/building_area.dart';
 import 'package:engineering_assistant/ui/tools/building/building_area_strings.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
+import 'package:engineering_assistant/ui/tools/masonry/masonry.dart';
+import 'package:engineering_assistant/ui/tools/masonry/masonry_strings.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/earthwork/earthwork.dart';
@@ -631,6 +633,7 @@ void main() {
         'concrete': kConcreteTabCount,
         'earthwork': kEarthworkTabCount,
         'rebar': kRebarTabCount,
+        'masonry': kMasonryTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1436,6 +1439,183 @@ void main() {
     });
   });
 
+  group('砌筑工程量', () {
+    test('砖墙：V =（墙长 × 墙高 − 洞口）× 墙厚 − 混凝土构件', () {
+      expect(
+        brickWallVolume(length: 10, height: 3, thickness: 0.24),
+        closeTo(7.2, 1e-9),
+      );
+      // 洞口 6 ㎡、圈梁等 0.5 m³：24 × 0.24 − 0.5 = 5.26 m³
+      expect(
+        brickWallVolume(
+          length: 10,
+          height: 3,
+          thickness: 0.24,
+          openingArea: 6,
+          concreteVolume: 0.5,
+        ),
+        closeTo(5.26, 1e-9),
+      );
+      // 扣得太多时不出负数
+      expect(
+        brickWallVolume(
+          length: 2,
+          height: 2,
+          thickness: 0.24,
+          concreteVolume: 10,
+        ),
+        0,
+      );
+    });
+
+    test('单个 ≤ 0.3 ㎡ 的孔洞不扣除', () {
+      expect(kMasonryHoleThreshold, 0.3);
+      expect(deductedOpening(0.3), 0);
+      expect(deductedOpening(0.29), 0);
+      expect(deductedOpening(0.31), closeTo(0.31, 1e-9));
+      // 门洞 0.8 × 2.1 = 1.68 ㎡ 才扣
+      expect(deductedOpening(0.8 * 2.1), closeTo(1.68, 1e-9));
+    });
+
+    test('砖基础：折加高度法与大放脚体积法', () {
+      expect(kWallThickness240, 0.24);
+      expect(kWallThickness120, 0.115);
+      // 0.24 × (1.2 + 0.197) × (30 + 20) = 16.764 m³
+      expect(
+        brickFoundationVolume(
+          thickness: 0.24,
+          height: 1.2,
+          addedHeight: 0.197,
+          centerlineLength: 30,
+          netLength: 20,
+        ),
+        closeTo(16.764, 1e-9),
+      );
+      // 折加高度为 0 时退化成 0.24 × 1.2 × 50 = 14.4 m³
+      expect(
+        brickFoundationVolume(
+          thickness: 0.24,
+          height: 1.2,
+          addedHeight: 0,
+          centerlineLength: 30,
+          netLength: 20,
+        ),
+        closeTo(14.4, 1e-9),
+      );
+      // 大放脚体积法：14.4 + 2.364 = 16.764 m³，与折加高度法对得上
+      expect(
+        brickFoundationWithStepVolume(
+          thickness: 0.24,
+          height: 1.2,
+          centerlineLength: 30,
+          netLength: 20,
+          stepVolume: 2.364,
+        ),
+        closeTo(16.764, 1e-9),
+      );
+    });
+
+    test('特殊墙体：空斗墙 / 空花墙按外形体积，多孔砖墙扣孔洞', () {
+      expect(
+        specialWallVolume(length: 10, height: 3, thickness: 0.24),
+        closeTo(7.2, 1e-9),
+      );
+      // 多孔砖墙扣 0.6 m³ 孔洞
+      expect(
+        specialWallVolume(
+          length: 10,
+          height: 3,
+          thickness: 0.24,
+          holeVolume: 0.6,
+        ),
+        closeTo(6.6, 1e-9),
+      );
+      // 孔洞比墙体还大时按 0 算
+      expect(
+        specialWallVolume(
+          length: 1,
+          height: 1,
+          thickness: 0.115,
+          holeVolume: 9,
+        ),
+        0,
+      );
+    });
+
+    test('五种语言的「砌筑工程」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kMasonryStrings, language);
+        for (final text in <String>[
+          s.tabWall,
+          s.tabFoundation,
+          s.tabSpecial,
+          s.wallSection,
+          s.wallLength,
+          s.wallHeight,
+          s.wallThickness,
+          s.openingArea,
+          s.concreteVolume,
+          s.wallResult,
+          s.wallFormula,
+          s.wallHint,
+          s.foundationSection,
+          s.foundationMode,
+          s.modeAddedHeight,
+          s.modeStepVolume,
+          s.foundationThickness,
+          s.foundationHeight,
+          s.addedHeight,
+          s.centerlineLength,
+          s.netLength,
+          s.stepVolume,
+          s.foundationResult,
+          s.foundationFormula,
+          s.foundationStepFormula,
+          s.foundationHint,
+          s.specialSection,
+          s.specialType,
+          s.typeHollow,
+          s.typeOpenwork,
+          s.typePerforated,
+          s.holeVolume,
+          s.specialResult,
+          s.specialFormula,
+          s.specialHoleFormula,
+          s.specialHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 砖墙 6 个、折加高度 6 个、大放脚 6 个、特殊墙体 4 个 / 5 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.wallFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.foundationFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.foundationStepFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.specialFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.specialHoleFormula).length,
+          5,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1465,16 +1645,17 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 五个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 六个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 13, reason: language.code);
+        expect(visibleTools.length, 14, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
           'concrete',
           'earthwork',
           'rebar',
+          'masonry',
           'distance',
           'area',
           'volume',
@@ -1488,7 +1669,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 13);
+      expect(kTools.length, 14);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1502,7 +1683,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 13);
+      expect(kTools.length, 14);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {
