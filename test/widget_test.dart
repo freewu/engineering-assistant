@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('12 個のアプリ'), findsOneWidget);
+    expect(find.text('13 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1593,7 +1593,72 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方的默认 tab', (tester) async {
+  testWidgets('钢筋工程：直钢筋 / 箍筋 / 弯起钢筋按公式算，速查表有五个常用直径', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'rebar'),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['直钢筋', '箍筋', '弯起钢筋', '速查表']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    // 直钢筋：6000 − 2 × 25 = 5950 mm，质量 5.95 × 0.00617 × 20² = 14.6846 kg
+    expect(find.text('5950 mm'), findsOneWidget);
+    expect(find.text('L = 6000 − 2 × 25 + 2 × 0 = 5950 mm'), findsOneWidget);
+    expect(find.text('14.6846 kg'), findsOneWidget);
+    expect(
+      find.text('W = 1 × 5.95 × 0.00617 × 20² = 14.6846 kg'),
+      findsOneWidget,
+    );
+
+    // 箍筋：2 × (300 + 600) − 8 × 25 + 2 × 11.9 × 8 = 1790.4 mm
+    await tester.tap(find.widgetWithText(Tab, '箍筋'));
+    await tester.pumpAndSettle();
+    expect(find.text('1790.4 mm'), findsOneWidget);
+    expect(
+      find.text('L = 2 × (300 + 600) − 8 × 25 + 2 × 11.9 × 8 = 1790.4 mm'),
+      findsOneWidget,
+    );
+
+    // 弯起钢筋：4000 + 500 − 0 + 0 = 4500 mm
+    await tester.tap(find.widgetWithText(Tab, '弯起钢筋'));
+    await tester.pumpAndSettle();
+    expect(find.text('4500 mm'), findsOneWidget);
+
+    // 速查表：常用直径的理论质量
+    await tester.tap(find.widgetWithText(Tab, '速查表'));
+    await tester.pumpAndSettle();
+    expect(find.text('φ10'), findsOneWidget);
+    expect(find.text('0.617 kg/m'), findsOneWidget);
+    expect(find.text('2.47 kg/m'), findsOneWidget);
+    expect(find.text('3.85 kg/m'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('钢筋工程：手机尺寸下四个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'rebar'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['速查表', '弯起钢筋', '箍筋', '直钢筋']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋的默认 tab', (tester) async {
     tester.view.physicalSize = const Size(1440, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -1622,10 +1687,12 @@ void main() {
     await pick('building_area', '车棚');
     await pick('concrete', '板');
     await pick('earthwork', '管沟土方');
+    await pick('rebar', '速查表');
     expect(store.values['material.tab'], '2');
     expect(store.values['building_area.tab'], '5');
     expect(store.values['concrete.tab'], '2');
     expect(store.values['earthwork.tab'], '2');
+    expect(store.values['rebar.tab'], '3');
 
     // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
     Future<void> open(String toolId) async {
@@ -1649,6 +1716,8 @@ void main() {
     expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
     await open('earthwork');
     expect(find.text('127.5 m³'), findsOneWidget);
+    await open('rebar');
+    expect(find.text('3.85 kg/m'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 

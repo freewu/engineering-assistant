@@ -18,6 +18,8 @@ import 'package:engineering_assistant/ui/tools/earthwork/earthwork_strings.dart'
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
 import 'package:engineering_assistant/ui/tools/tool_tabs.dart';
 import 'package:engineering_assistant/ui/tools/pressure/pressure.dart';
+import 'package:engineering_assistant/ui/tools/rebar/rebar.dart';
+import 'package:engineering_assistant/ui/tools/rebar/rebar_strings.dart';
 import 'package:engineering_assistant/ui/tools/speed/speed.dart';
 import 'package:engineering_assistant/ui/tools/temperature/temperature.dart';
 import 'package:engineering_assistant/ui/tools/conversion_catalogs.dart';
@@ -628,6 +630,7 @@ void main() {
         'building_area': kBuildingTabCount,
         'concrete': kConcreteTabCount,
         'earthwork': kEarthworkTabCount,
+        'rebar': kRebarTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1284,6 +1287,155 @@ void main() {
     });
   });
 
+  group('钢筋工程量', () {
+    test('直钢筋：L = l - 2c + 2 × 弯钩', () {
+      expect(kCoverBeam, 25);
+      expect(kCoverSlab, 20);
+      expect(kCoverColumn, 30);
+      // 6 m 梁、保护层 25 mm、无弯钩
+      expect(
+        straightRebarLength(memberLength: 6000, cover: kCoverBeam),
+        closeTo(5950, 1e-9),
+      );
+      // 两端各加 6.25d 的 180° 弯钩（d = 20）
+      expect(
+        straightRebarLength(
+          memberLength: 6000,
+          cover: kCoverBeam,
+          hookLength: 6.25 * 20,
+        ),
+        closeTo(5950 + 250, 1e-9),
+      );
+      // 保护层比构件还长时不出现负数
+      expect(straightRebarLength(memberLength: 40, cover: 25), 0);
+    });
+
+    test('抗震箍筋：L = 2(a + b) - 8c + 2 × 11.9d', () {
+      expect(kStirrupHookFactor, 11.9);
+      // 300 × 600 梁、保护层 25、φ8 箍筋
+      expect(
+        stirrupRebarLength(
+          sectionA: 300,
+          sectionB: 600,
+          cover: 25,
+          diameter: 8,
+        ),
+        closeTo(2 * 900 - 200 + 2 * 11.9 * 8, 1e-9),
+      );
+      expect(
+        stirrupRebarLength(sectionA: 0, sectionB: 0, cover: 0, diameter: 0),
+        0,
+      );
+    });
+
+    test('弯起钢筋：L = 直段 + 斜段 - 弯曲调整值 + 弯钩', () {
+      expect(
+        bentRebarLength(
+          straightPart: 4000,
+          inclinedPart: 500,
+          bendAdjustment: 40,
+          hookLength: 100,
+        ),
+        closeTo(4560, 1e-9),
+      );
+      expect(bentRebarLength(straightPart: 1000, inclinedPart: 200), 1200);
+    });
+
+    test('理论质量：W = 0.00617 d²，速查表数值对得上', () {
+      expect(kRebarMassFactor, 0.00617);
+      expect(kCommonDiameters.first, 6);
+      expect(kCommonDiameters.last, 32);
+      expect(kReferenceMassPerMeter.length, kCommonDiameters.length);
+      for (final (diameter, expected) in <(int, double)>[
+        (10, 0.617),
+        (12, 0.888),
+        (16, 1.58),
+        (20, 2.47),
+        (25, 3.85),
+      ]) {
+        // 速查表按规范取整值显示
+        expect(
+          kReferenceMassPerMeter[diameter],
+          expected,
+          reason: 'φ$diameter',
+        );
+        // 公式算出来的值与表值只差四舍五入
+        expect(
+          rebarMassPerMeter(diameter.toDouble()),
+          closeTo(expected, 0.01),
+          reason: 'φ$diameter',
+        );
+      }
+      // 6 m 的 φ20 钢筋：5.95 m × 2.468 = 14.68 kg，两根翻倍
+      final single = rebarMass(length: 5950, diameter: 20);
+      expect(single, closeTo(5.95 * 2.468, 1e-3));
+      expect(rebarMass(length: 5950, diameter: 20, count: 2), single * 2);
+      expect(rebarMass(length: 0, diameter: 25), 0);
+    });
+
+    test('五种语言的「钢筋工程」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kRebarStrings, language);
+        for (final text in <String>[
+          s.tabStraight,
+          s.tabStirrup,
+          s.tabBent,
+          s.tabTable,
+          s.straightSection,
+          s.memberLength,
+          s.cover,
+          s.hookLength,
+          s.diameter,
+          s.count,
+          s.lengthResult,
+          s.massResult,
+          s.straightFormula,
+          s.straightHint,
+          s.stirrupSection,
+          s.sectionA,
+          s.sectionB,
+          s.stirrupFormula,
+          s.stirrupHint,
+          s.bentSection,
+          s.straightPart,
+          s.inclinedPart,
+          s.bendAdjustment,
+          s.bentFormula,
+          s.bentHint,
+          s.massFormula,
+          s.tableSection,
+          s.tableDiameter,
+          s.tableMass,
+          s.tableHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 直钢筋 4 个、箍筋 5 个、弯起 5 个、质量 4 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.straightFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.stirrupFormula).length,
+          5,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.bentFormula).length,
+          5,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.massFormula).length,
+          4,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1313,15 +1465,16 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 材料用量 + 建筑面积 + 混凝土构件 + 土石方在所有界面语言下都展示', () {
+    test('八个换算工具 + 五个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 12, reason: language.code);
+        expect(visibleTools.length, 13, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
           'concrete',
           'earthwork',
+          'rebar',
           'distance',
           'area',
           'volume',
@@ -1335,7 +1488,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 12);
+      expect(kTools.length, 13);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1349,7 +1502,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 12);
+      expect(kTools.length, 13);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {
