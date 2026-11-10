@@ -9,6 +9,7 @@ import 'tools/area/setting.dart';
 import 'tools/building/setting.dart';
 import 'tools/concrete/setting.dart';
 import 'tools/earthwork/setting.dart';
+import 'tools/formwork/setting.dart';
 import 'tools/masonry/setting.dart';
 import 'tools/rebar/setting.dart';
 import 'tools/distance/setting.dart';
@@ -134,6 +135,8 @@ class SettingsPage extends StatelessWidget {
                 RebarSetting(controller: controller),
                 const SizedBox(height: 12),
                 MasonrySetting(controller: controller),
+                const SizedBox(height: 12),
+                FormworkSetting(controller: controller),
                 const SizedBox(height: 12),
                 SettingsCard(
                   icon: Icons.info_outline_rounded,

@@ -11,6 +11,8 @@ import 'package:engineering_assistant/ui/tools/building/building_area.dart';
 import 'package:engineering_assistant/ui/tools/building/building_area_strings.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
+import 'package:engineering_assistant/ui/tools/formwork/formwork.dart';
+import 'package:engineering_assistant/ui/tools/formwork/formwork_strings.dart';
 import 'package:engineering_assistant/ui/tools/masonry/masonry.dart';
 import 'package:engineering_assistant/ui/tools/masonry/masonry_strings.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
@@ -634,6 +636,7 @@ void main() {
         'earthwork': kEarthworkTabCount,
         'rebar': kRebarTabCount,
         'masonry': kMasonryTabCount,
+        'formwork': kFormworkTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1616,6 +1619,172 @@ void main() {
     });
   });
 
+  group('模板工程量', () {
+    test('矩形柱：S = 截面周长 × 柱高', () {
+      // 500 × 500 柱、高 3 m：2 × (0.5 + 0.5) × 3 = 6 ㎡
+      expect(columnFormworkArea(a: 0.5, b: 0.5, height: 3), closeTo(6, 1e-9));
+      expect(columnFormworkArea(a: 0.4, b: 0.6, height: 2), closeTo(4, 1e-9));
+    });
+
+    test('构造柱：截面周长 + 马牙槎展开，240 × 240 每米 1.56 ㎡', () {
+      expect(kToothProtrusion, 0.06);
+      expect(kToothCountPerMeter, 5);
+      // 0.96 + 2 × 0.06 × 5 = 1.56 ㎡/m
+      expect(
+        tieColumnFormworkArea(a: 0.24, b: 0.24, height: 1),
+        closeTo(1.56, 1e-9),
+      );
+      // 3 m 高 → 4.68 ㎡
+      expect(
+        tieColumnFormworkArea(a: 0.24, b: 0.24, height: 3),
+        closeTo(4.68, 1e-9),
+      );
+      // 马牙槎为 0 时退化成矩形柱
+      expect(
+        tieColumnFormworkArea(a: 0.24, b: 0.24, height: 3, protrusion: 0),
+        closeTo(columnFormworkArea(a: 0.24, b: 0.24, height: 3), 1e-9),
+      );
+    });
+
+    test('矩形梁：S =（梁底宽 + 2 × 梁高）× 梁长', () {
+      // 300 × 600 梁、长 6 m：(0.3 + 1.2) × 6 = 9 ㎡
+      expect(
+        beamFormworkArea(bottomWidth: 0.3, height: 0.6, length: 6),
+        closeTo(9, 1e-9),
+      );
+      // 梁板连接处侧模不扣板厚，按全高算
+      expect(
+        beamFormworkArea(bottomWidth: 0.2, height: 0.5, length: 4),
+        closeTo(4.8, 1e-9),
+      );
+    });
+
+    test('墙：S = 墙长 × 墙高 − 洞口 + 侧壁，≤ 0.3 ㎡ 洞口不扣', () {
+      expect(kFormworkHoleThreshold, 0.3);
+      // 10 × 3 − 6 + 0.5 = 24.5 ㎡
+      expect(
+        wallFormworkArea(length: 10, height: 3, openingArea: 6, sideArea: 0.5),
+        closeTo(24.5, 1e-9),
+      );
+      // 洞口 0.3 ㎡ 不扣
+      expect(
+        wallFormworkArea(length: 10, height: 3, openingArea: 0.3),
+        closeTo(30, 1e-9),
+      );
+      // 洞口 0.31 ㎡ 要扣
+      expect(
+        wallFormworkArea(length: 10, height: 3, openingArea: 0.31),
+        closeTo(29.69, 1e-9),
+      );
+    });
+
+    test('楼梯：侧面展开面积 =（展开斜长 + 平台长）× 梯段宽', () {
+      // 踏步 300 × 150：斜长 = 10 × √(0.09 + 0.0225) = 3.3541 m
+      expect(
+        stairSlopeLength(steps: 10, treadWidth: 0.3, riserHeight: 0.15),
+        closeTo(10 * 0.33541, 1e-4),
+      );
+      // （3.3541 + 1.2）× 1.2 = 5.465 ㎡
+      expect(
+        stairFormworkArea(
+          steps: 10,
+          treadWidth: 0.3,
+          riserHeight: 0.15,
+          flightWidth: 1.2,
+          landingLength: 1.2,
+        ),
+        closeTo(5.4649, 1e-4),
+      );
+      // 没有平台、0 级踏步时面积为 0
+      expect(
+        stairFormworkArea(
+          steps: 0,
+          treadWidth: 0.28,
+          riserHeight: 0.15,
+          flightWidth: 1.2,
+        ),
+        0,
+      );
+    });
+
+    test('五种语言的「模板工程」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kFormworkStrings, language);
+        for (final text in <String>[
+          s.tabColumn,
+          s.tabBeam,
+          s.tabWall,
+          s.tabStair,
+          s.columnSection,
+          s.columnMode,
+          s.modeRectangle,
+          s.modeTie,
+          s.columnA,
+          s.columnB,
+          s.columnHeight,
+          s.columnResult,
+          s.columnFormula,
+          s.tieFormula,
+          s.tieHint,
+          s.columnHint,
+          s.beamSection,
+          s.beamBottomWidth,
+          s.beamHeight,
+          s.beamLength,
+          s.beamResult,
+          s.beamFormula,
+          s.beamHint,
+          s.wallSection,
+          s.wallLength,
+          s.wallHeight,
+          s.wallOpening,
+          s.wallSide,
+          s.wallResult,
+          s.wallFormula,
+          s.wallHint,
+          s.stairSection,
+          s.stairSteps,
+          s.stairTreadWidth,
+          s.stairRiser,
+          s.stairFlightWidth,
+          s.stairLanding,
+          s.stairResult,
+          s.stairFormula,
+          s.stairHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 矩形柱 4 个、构造柱 6 个、梁 4 个、墙 5 个、楼梯 4 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.columnFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.tieFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.beamFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.wallFormula).length,
+          5,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.stairFormula).length,
+          4,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1645,10 +1814,10 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 六个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 七个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 14, reason: language.code);
+        expect(visibleTools.length, 15, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
@@ -1656,6 +1825,7 @@ void main() {
           'earthwork',
           'rebar',
           'masonry',
+          'formwork',
           'distance',
           'area',
           'volume',
@@ -1669,7 +1839,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 14);
+      expect(kTools.length, 15);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1683,7 +1853,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 14);
+      expect(kTools.length, 15);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

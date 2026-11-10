@@ -2,7 +2,7 @@
 
 <img src="logo.jpg" alt="应用图标" width="96" align="right" />
 
-应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具、材料用量估算、建筑面积计算、混凝土构件工程量、土石方工程量、钢筋工程量与砌筑工程量。
+应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具、材料用量估算、建筑面积计算、混凝土构件工程量、土石方工程量、钢筋工程量、砌筑工程量与模板工程量。
 支持深色 / 浅色主题与五种界面语言（简体中文、繁體中文、English、日本語、Español）。
 
 ![计算器](docs/screenshots/calculator.png)
@@ -56,6 +56,7 @@
 | 土石方工程 | 场地平整 / 基坑基槽 / 管沟土方三个 tab，按 GB/T 50854-2024 清单规则算面积与体积 |
 | 钢筋工程 | 直钢筋 / 箍筋 / 弯起钢筋三个 tab 算中心线长度与质量，另附常用直径理论质量速查表 |
 | 砌筑工程 | 砖墙 / 砖基础 / 特殊墙体三个 tab，按 GB/T 50854-2024 清单规则算体积 |
+| 模板工程 | 柱 / 梁 / 墙 / 楼梯四个 tab，算模板与混凝土的接触面积 |
 
 ![工具](docs/screenshots/tools.png)
 
@@ -69,7 +70,7 @@
 - 数值框随时可以清空：空着的输入不参与计算（结果显示「—」，换算页回到「填入数值后自动换算」的空状态），
   清空这件事本身也会记住，下次进来仍是空的，不会再填回默认值
 
-Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`、`material`、`building_area`、`concrete`、`earthwork`、`rebar`、`masonry`）直接打开某个工具。
+Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`、`material`、`building_area`、`concrete`、`earthwork`、`rebar`、`masonry`、`formwork`）直接打开某个工具。
 
 ### 材料用量（四个 tab）
 
@@ -211,6 +212,27 @@ Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置
 
 ![砌筑工程](docs/screenshots/masonry.png)
 
+### 模板工程（四个 tab）
+
+按模板与混凝土的**接触面积**（㎡）计算，依据 GB/T 50854-2024 清单规则。
+
+| tab | 公式 | 关键说明 |
+| --- | --- | --- |
+| 柱 | 矩形柱 S = 2(a + b) × H；构造柱 S =（2(a + b) + 马牙槎展开）× H | 构造柱马牙槎每边凸出 60 mm、每米 5 槎，240 × 240 柱每米 1.56 ㎡ |
+| 梁 | S =（梁底宽 + 2 × 梁高）× 梁长 | 梁板连接处侧模不扣板厚，按梁的全高算 |
+| 墙 | S = 墙长 × 墙高 − 门窗洞口面积 + 洞口侧壁面积 | 不扣除单个 ≤ 0.3 ㎡ 的孔洞 |
+| 楼梯 | S =（踏步数 × √(踏步宽² + 踏步高²) + 休息平台长）× 梯段宽 | 侧面展开面积，含踏面与踢面，平台并入同宽度 |
+
+例子：500 × 500 柱、高 3 m = 6 ㎡；300 × 600 梁、长 6 m = 9 ㎡；
+10 × 3 m 墙、洞口 6 ㎡、侧壁 0.5 ㎡ = 24.5 ㎡。
+
+四个 tab 各自记一份输入（键 `tool.formwork`），带常用默认值；数值清空就不算。
+柱子的「矩形柱 / 构造柱」也是记下来的选项，切到构造柱后马牙槎自动按 60 mm × 5 槎展开。
+
+打开时默认停在哪个 tab 可以在设置页里改（「工程计算默认值」→「模板工程」，键 `formwork.tab`，默认柱）。
+
+![模板工程](docs/screenshots/formwork.png)
+
 ## 设置与多语言
 
 导航栏第四项「设置」里可以切换外观与界面语言，选择立刻生效并记在本机
@@ -231,7 +253,7 @@ Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置
   卡片里只有「默认单位」一项；八个换算工具的值各存一份，改动长度换算不影响面积换算
 - **工程计算默认值**：材料用量 / 建筑面积 / 混凝土构件 / 土石方工程 / 钢筋工程 / 砌筑工程打开时
   默认停在哪一个 tab（键 `material.tab` / `building_area.tab` / `concrete.tab` / `earthwork.tab` /
-  `rebar.tab` / `masonry.tab`，六个工具各存一份，改动只影响自己）
+  `rebar.tab` / `masonry.tab` / `formwork.tab`，七个工具各存一份，改动只影响自己）
 - **关于**：版本号与仓库地址，一键复制链接
 
 浅色模式下的计算器（按键、显示屏、工具卡片都已跟着变浅）：

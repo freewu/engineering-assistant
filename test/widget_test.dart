@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('14 個のアプリ'), findsOneWidget);
+    expect(find.text('15 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1737,7 +1737,84 @@ void main() {
     }
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑的默认 tab', (
+  testWidgets('模板工程：柱 / 梁 / 墙 / 楼梯按接触面积算', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'formwork'),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['柱', '梁', '墙', '楼梯']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    // 柱：2 × (0.5 + 0.5) × 3 = 6 ㎡
+    expect(find.text('6 m²'), findsOneWidget);
+    expect(find.text('S = 2 × (0.5 + 0.5) × 3 = 6 m²'), findsOneWidget);
+
+    // 梁：(0.3 + 2 × 0.6) × 6 = 9 ㎡
+    await tester.tap(find.widgetWithText(Tab, '梁'));
+    await tester.pumpAndSettle();
+    expect(find.text('9 m²'), findsOneWidget);
+    expect(find.text('S = (0.3 + 2 × 0.6) × 6 = 9 m²'), findsOneWidget);
+
+    // 墙：(10 × 3 − 6) + 0.5 = 24.5 ㎡
+    await tester.tap(find.widgetWithText(Tab, '墙'));
+    await tester.pumpAndSettle();
+    expect(find.text('24.5 m²'), findsOneWidget);
+
+    // 楼梯：(10 × √(0.28² + 0.15²) + 1.2) × 1.2 ≈ 5.25 ㎡
+    await tester.tap(find.widgetWithText(Tab, '楼梯'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('m²'), findsWidgets);
+    expect(find.textContaining('× 1.2 = 5.25'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('模板工程：构造柱带马牙槎，改类型后面积变大', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'formwork'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('formwork-column-mode')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('构造柱').last);
+    await tester.pumpAndSettle();
+
+    // (2 × (0.5 + 0.5) + 2 × 0.06 × 5) × 3 = (2 + 0.6) × 3 = 7.8 ㎡
+    expect(find.text('7.8 m²'), findsOneWidget);
+    expect(find.textContaining('2 × 0.06 × 5'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('模板工程：手机尺寸下四个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'formwork'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['楼梯', '墙', '梁', '柱']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板的默认 tab', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1440, 2400);
@@ -1770,12 +1847,14 @@ void main() {
     await pick('earthwork', '管沟土方');
     await pick('rebar', '速查表');
     await pick('masonry', '特殊墙体');
+    await pick('formwork', '楼梯');
     expect(store.values['material.tab'], '2');
     expect(store.values['building_area.tab'], '5');
     expect(store.values['concrete.tab'], '2');
     expect(store.values['earthwork.tab'], '2');
     expect(store.values['rebar.tab'], '3');
     expect(store.values['masonry.tab'], '2');
+    expect(store.values['formwork.tab'], '3');
 
     // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
     Future<void> open(String toolId) async {
@@ -1803,6 +1882,8 @@ void main() {
     expect(find.text('3.85 kg/m'), findsOneWidget);
     await open('masonry');
     expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
+    await open('formwork');
+    expect(find.textContaining('m²'), findsWidgets);
     await tester.pump(const Duration(milliseconds: 600));
   });
 
