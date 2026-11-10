@@ -4,6 +4,7 @@ import 'earthwork/earthwork.dart';
 import 'formwork/formwork.dart';
 import 'masonry/masonry.dart';
 import 'material/material.dart';
+import 'paint/paint.dart';
 import 'rebar/rebar.dart';
 import 'decoration/decoration.dart';
 import 'insulation/insulation.dart';
@@ -24,4 +25,5 @@ const Map<String, int> kToolTabCounts = <String, int>{
   'roof': kRoofTabCount,
   'insulation': kInsulationTabCount,
   'decoration': kDecorationTabCount,
+  'paint': kPaintTabCount,
 };

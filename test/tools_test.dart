@@ -21,6 +21,8 @@ import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
 import 'package:engineering_assistant/ui/tools/decoration/decoration.dart';
 import 'package:engineering_assistant/ui/tools/decoration/decoration_strings.dart';
+import 'package:engineering_assistant/ui/tools/paint/paint.dart';
+import 'package:engineering_assistant/ui/tools/paint/paint_strings.dart';
 import 'package:engineering_assistant/ui/tools/earthwork/earthwork.dart';
 import 'package:engineering_assistant/ui/tools/earthwork/earthwork_strings.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
@@ -646,6 +648,7 @@ void main() {
         'roof': kRoofTabCount,
         'insulation': kInsulationTabCount,
         'decoration': kDecorationTabCount,
+        'paint': kPaintTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -2149,6 +2152,129 @@ void main() {
     });
   });
 
+  group('油漆涂料工程量', () {
+    test('墙面涂刷面积：S = 墙长 × 墙高 − 洞口（≤ 0.3 ㎡ 不扣）', () {
+      // 10 × 3 − 6 = 24 ㎡
+      expect(
+        wallPaintArea(length: 10, height: 3, openingArea: 6),
+        closeTo(24, 1e-9),
+      );
+      // 洞口正好 0.3 ㎡ 时不扣
+      expect(
+        wallPaintArea(length: 10, height: 3, openingArea: 0.3),
+        closeTo(30, 1e-9),
+      );
+      // 洞口比墙面还大时取 0，不出现负数
+      expect(wallPaintArea(length: 1, height: 1, openingArea: 5), 0);
+      expect(kPaintHoleThreshold, 0.3);
+      expect(paintDeductedOpening(0.3), 0);
+      expect(paintDeductedOpening(6), closeTo(6, 1e-9));
+    });
+
+    test('天棚涂刷面积：S = 主墙间净面积 + 梁侧面面积', () {
+      expect(ceilingPaintArea(netArea: 80), closeTo(80, 1e-9));
+      expect(ceilingPaintArea(netArea: 80, beamSideArea: 4), closeTo(84, 1e-9));
+    });
+
+    test('门窗油漆面积：S = 樘数 × 每樘洞口面积 × 展开系数', () {
+      // 8 樘 × 3.6 ㎡ × 1.0 = 28.8 ㎡
+      expect(joineryPaintArea(count: 8, areaPerUnit: 3.6), closeTo(28.8, 1e-9));
+      // 双层木门窗取 2.0
+      expect(
+        joineryPaintArea(count: 8, areaPerUnit: 3.6, unfoldFactor: 2),
+        closeTo(57.6, 1e-9),
+      );
+    });
+
+    test('涂料用量：G = 面积 × 遍数 × 单耗', () {
+      // 24 × 2 × 0.25 = 12 kg
+      expect(
+        paintUsage(area: 24, coats: 2, consumption: 0.25),
+        closeTo(12, 1e-9),
+      );
+      // 管道 / 设备类没有面积时按 0 处理
+      expect(paintUsage(area: 0, coats: 2, consumption: 0.25), 0);
+    });
+
+    test('折合桶数：向上取整，用量或桶重为 0 时返回 0', () {
+      expect(kDefaultPaintCanWeight, 20);
+      expect(paintCans(usage: 9.6, canWeight: 20), 1);
+      expect(paintCans(usage: 42, canWeight: 20), 3);
+      expect(paintCans(usage: 40, canWeight: 20), 2);
+      expect(paintCans(usage: 0, canWeight: 20), 0);
+      expect(paintCans(usage: 10, canWeight: 0), 0);
+    });
+
+    test('五种语言的「油漆涂料」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kPaintStrings, language);
+        for (final text in <String>[
+          s.tabWall,
+          s.tabCeiling,
+          s.tabJoinery,
+          s.coats,
+          s.coatUnit,
+          s.consumption,
+          s.consumptionUnit,
+          s.canWeight,
+          s.canUnit,
+          s.areaResult,
+          s.usageResult,
+          s.cansResult,
+          s.usageFormula,
+          s.cansFormula,
+          s.wallSection,
+          s.wallLength,
+          s.wallHeight,
+          s.openingArea,
+          s.wallAreaFormula,
+          s.wallHint,
+          s.ceilingSection,
+          s.netArea,
+          s.beamSideArea,
+          s.ceilingAreaFormula,
+          s.ceilingHint,
+          s.joinerySection,
+          s.unitCount,
+          s.countUnit,
+          s.areaPerUnit,
+          s.unfoldFactor,
+          s.joineryAreaFormula,
+          s.joineryHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 墙面 4 个、天棚 3 个、门窗 4 个、用量 4 个、桶数 3 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.wallAreaFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.ceilingAreaFormula).length,
+          3,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.joineryAreaFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.usageFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.cansFormula).length,
+          3,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -2178,10 +2304,10 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 十个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 十一个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 18, reason: language.code);
+        expect(visibleTools.length, 19, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
@@ -2193,6 +2319,7 @@ void main() {
           'roof',
           'insulation',
           'decoration',
+          'paint',
           'distance',
           'area',
           'volume',
@@ -2206,7 +2333,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 18);
+      expect(kTools.length, 19);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -2220,7 +2347,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 18);
+      expect(kTools.length, 19);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

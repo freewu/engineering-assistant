@@ -13,6 +13,7 @@ import 'tools/earthwork/setting.dart';
 import 'tools/formwork/setting.dart';
 import 'tools/insulation/setting.dart';
 import 'tools/masonry/setting.dart';
+import 'tools/paint/setting.dart';
 import 'tools/rebar/setting.dart';
 import 'tools/roof/setting.dart';
 import 'tools/distance/setting.dart';
@@ -146,6 +147,8 @@ class SettingsPage extends StatelessWidget {
                 InsulationSetting(controller: controller),
                 const SizedBox(height: 12),
                 DecorationSetting(controller: controller),
+                const SizedBox(height: 12),
+                PaintSetting(controller: controller),
                 const SizedBox(height: 12),
                 SettingsCard(
                   icon: Icons.info_outline_rounded,

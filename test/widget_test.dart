@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('18 個のアプリ'), findsOneWidget);
+    expect(find.text('19 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1941,8 +1941,86 @@ void main() {
     }
   });
 
+  testWidgets('油漆涂料：墙面 / 天棚 / 门窗算面积、用量与桶数', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'paint'),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['墙面', '天棚', '门窗']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    Future<void> input(String section, String value, {int index = 0}) async {
+      await tester.enterText(
+        find
+            .descendant(
+              of: find.byKey(Key(section)),
+              matching: find.byType(TextField),
+            )
+            .at(index),
+        value,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // 墙面：S = 10 × 3 − 6 = 24 ㎡，G = 24 × 2 × 0.25 = 12 kg，1 桶（20 kg/桶）
+    expect(find.text('24 m²'), findsOneWidget);
+    expect(find.text('12 kg'), findsOneWidget);
+    expect(find.text('1 桶'), findsOneWidget);
+    expect(
+      find.text('G = 24 m² × 2 遍 × 0.25 kg/(㎡·遍) = 12 kg'),
+      findsOneWidget,
+    );
+
+    // 遍数改成 3：G = 24 × 3 × 0.25 = 18 kg
+    await input('paint-wall', '3', index: 3);
+    expect(find.text('18 kg'), findsOneWidget);
+
+    // 清空单耗：用量与桶数都显示「—」，面积照算
+    await input('paint-wall', '', index: 4);
+    expect(find.text('24 m²'), findsOneWidget);
+    expect(find.text('—'), findsNWidgets(2));
+
+    // 天棚：S = 80 + 4 = 84 ㎡，G = 84 × 2 × 0.25 = 42 kg，3 桶
+    await tester.tap(find.widgetWithText(Tab, '天棚'));
+    await tester.pumpAndSettle();
+    expect(find.text('84 m²'), findsOneWidget);
+    expect(find.text('42 kg'), findsOneWidget);
+    expect(find.text('3 桶'), findsOneWidget);
+
+    // 门窗：S = 8 × 3.6 × 1 = 28.8 ㎡，G = 28.8 × 2 × 0.15 = 8.64 kg，1 桶
+    await tester.tap(find.widgetWithText(Tab, '门窗'));
+    await tester.pumpAndSettle();
+    expect(find.text('28.8 m²'), findsOneWidget);
+    expect(find.text('8.64 kg'), findsOneWidget);
+    expect(find.text('1 桶'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('油漆涂料：手机尺寸下三个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'paint'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['门窗', '天棚', '墙面']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets(
-    '设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面 / 保温 / 装饰的默认 tab',
+    '设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面 / 保温 / 装饰 / 涂料的默认 tab',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 2400);
       tester.view.devicePixelRatio = 1;
@@ -1978,6 +2056,7 @@ void main() {
       await pick('roof', '墙基');
       await pick('insulation', '柱');
       await pick('decoration', '楼地面');
+      await pick('paint', '门窗');
       expect(store.values['material.tab'], '2');
       expect(store.values['building_area.tab'], '5');
       expect(store.values['concrete.tab'], '2');
@@ -1988,6 +2067,7 @@ void main() {
       expect(store.values['roof.tab'], '3');
       expect(store.values['insulation.tab'], '2');
       expect(store.values['decoration.tab'], '2');
+      expect(store.values['paint.tab'], '2');
 
       // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
       Future<void> open(String toolId) async {

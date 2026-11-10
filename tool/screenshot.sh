@@ -65,15 +65,20 @@ fi
 shoot() {
   local name="$1" size="$2" path="$3"
   echo "› $name.png ($size)"
-  timeout 90 "$CHROME" \
-    --headless=new --no-sandbox --hide-scrollbars \
-    --no-first-run --no-default-browser-check \
-    --user-data-dir="$PROFILE_DIR/$name" \
-    --window-size="$size" --virtual-time-budget=60000 \
-    --screenshot="$(win_path "$OUT/$name.png")" \
-    "$URL/$path" >/dev/null 2>&1 || true
-  local bytes
-  bytes=$(stat -c %s "$OUT/$name.png" 2>/dev/null || echo 0)
+  local attempt bytes
+  # 无头 Chrome 偶尔加载不完 CanvasKit 会截出残图，重试两次
+  for attempt in 1 2 3; do
+    timeout 90 "$CHROME" \
+      --headless=new --no-sandbox --hide-scrollbars \
+      --no-first-run --no-default-browser-check \
+      --user-data-dir="$PROFILE_DIR/$name" \
+      --window-size="$size" --virtual-time-budget=60000 \
+      --screenshot="$(win_path "$OUT/$name.png")" \
+      "$URL/$path" >/dev/null 2>&1 || true
+    bytes=$(stat -c %s "$OUT/$name.png" 2>/dev/null || echo 0)
+    (( bytes >= 20000 )) && break
+    echo "  … 第 $attempt 次截图只剩 ${bytes} 字节，重试"
+  done
   if (( bytes < 20000 )); then
     echo "  ✗ 截图异常（${bytes} 字节），请重试"
     return 1
@@ -93,6 +98,7 @@ shoot formwork   1440,900 "index.html?page=tools&tool=formwork"
 shoot roof       1440,900 "index.html?page=tools&tool=roof"
 shoot insulation 1440,900 "index.html?page=tools&tool=insulation"
 shoot decoration 1440,900 "index.html?page=tools&tool=decoration"
+shoot paint      1440,900 "index.html?page=tools&tool=paint"
 shoot distance   1440,900 "index.html?page=tools&tool=distance"
 shoot area       1440,900 "index.html?page=tools&tool=area"
 shoot weight     1440,900 "index.html?page=tools&tool=weight"
