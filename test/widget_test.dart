@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('16 個のアプリ'), findsOneWidget);
+    expect(find.text('17 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1887,82 +1887,141 @@ void main() {
     }
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面的默认 tab', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1440, 2400);
+  testWidgets('保温隔热：屋面 / 墙面 / 柱按面积与体积算', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    final store = _MemoryStore();
-    final settings = SettingsController(store: store);
     await tester.pumpWidget(
-      EngineeringAssistantApp(settings: settings, initialTab: 2),
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'insulation'),
     );
     await tester.pumpAndSettle();
 
-    Future<void> pick(String toolId, String label) async {
-      final select = find.byKey(Key('settings-$toolId-tab'));
-      await tester.scrollUntilVisible(
-        select,
-        400,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(select);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(label).last);
-      await tester.pumpAndSettle();
+    for (final label in <String>['屋面', '墙面', '柱']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
     }
 
-    await pick('material', '水泥');
-    await pick('building_area', '车棚');
-    await pick('concrete', '板');
-    await pick('earthwork', '管沟土方');
-    await pick('rebar', '速查表');
-    await pick('masonry', '特殊墙体');
-    await pick('formwork', '楼梯');
-    await pick('roof', '墙基');
-    expect(store.values['material.tab'], '2');
-    expect(store.values['building_area.tab'], '5');
-    expect(store.values['concrete.tab'], '2');
-    expect(store.values['earthwork.tab'], '2');
-    expect(store.values['rebar.tab'], '3');
-    expect(store.values['masonry.tab'], '2');
-    expect(store.values['formwork.tab'], '3');
-    expect(store.values['roof.tab'], '3');
+    // 屋面：S = 100 ㎡，V = 10 m³
+    expect(find.text('100 m²'), findsOneWidget);
+    expect(find.text('10 m³'), findsOneWidget);
 
-    // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
-    Future<void> open(String toolId) async {
-      await tester.pumpWidget(
-        EngineeringAssistantApp(
-          settings: settings,
-          key: UniqueKey(),
-          initialTab: 1,
-          initialTool: toolId,
-        ),
-      );
-      await tester.pumpAndSettle();
-    }
+    // 墙面：S = 10 × 3 − 6 = 24 ㎡，V = 1.2 m³
+    await tester.tap(find.widgetWithText(Tab, '墙面'));
+    await tester.pumpAndSettle();
+    expect(find.text('24 m²'), findsOneWidget);
+    expect(find.text('1.2 m³'), findsOneWidget);
 
-    await open('material');
-    expect(find.text('1 吨'), findsOneWidget);
-    await open('building_area');
-    expect(find.text('S = 20 m² × 1/2 = 10 m²'), findsOneWidget);
-    await open('concrete');
-    expect(find.text('2.88 m³'), findsOneWidget);
-    expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
-    await open('earthwork');
-    expect(find.text('127.5 m³'), findsOneWidget);
-    await open('rebar');
-    expect(find.text('3.85 kg/m'), findsOneWidget);
-    await open('masonry');
-    expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
-    await open('formwork');
-    expect(find.textContaining('m²'), findsWidgets);
-    await open('roof');
-    expect(find.text('S = (30 + 20) × 0.24 = 12 m²'), findsOneWidget);
+    // 柱：S = 1.2 × 3 − 0.5 = 3.1 ㎡，V = 0.155 m³
+    await tester.tap(find.widgetWithText(Tab, '柱'));
+    await tester.pumpAndSettle();
+    expect(find.text('3.1 m²'), findsOneWidget);
+    expect(find.text('0.155 m³'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await tester.pump(const Duration(milliseconds: 600));
   });
+
+  testWidgets('保温隔热：孔洞不足 0.3 ㎡ 不扣，手机尺寸三 tab 不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'insulation'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+
+    // 孔洞改成 0.2 ㎡：面积仍是 100 ㎡
+    await tester.enterText(find.text('0').first, '0.2');
+    await tester.pumpAndSettle();
+    expect(find.text('100 m²'), findsOneWidget);
+
+    for (final label in <String>['柱', '墙面', '屋面']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets(
+    '设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面 / 保温的默认 tab',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final store = _MemoryStore();
+      final settings = SettingsController(store: store);
+      await tester.pumpWidget(
+        EngineeringAssistantApp(settings: settings, initialTab: 2),
+      );
+      await tester.pumpAndSettle();
+
+      Future<void> pick(String toolId, String label) async {
+        final select = find.byKey(Key('settings-$toolId-tab'));
+        await tester.scrollUntilVisible(
+          select,
+          400,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(select);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label).last);
+        await tester.pumpAndSettle();
+      }
+
+      await pick('material', '水泥');
+      await pick('building_area', '车棚');
+      await pick('concrete', '板');
+      await pick('earthwork', '管沟土方');
+      await pick('rebar', '速查表');
+      await pick('masonry', '特殊墙体');
+      await pick('formwork', '楼梯');
+      await pick('roof', '墙基');
+      await pick('insulation', '柱');
+      expect(store.values['material.tab'], '2');
+      expect(store.values['building_area.tab'], '5');
+      expect(store.values['concrete.tab'], '2');
+      expect(store.values['earthwork.tab'], '2');
+      expect(store.values['rebar.tab'], '3');
+      expect(store.values['masonry.tab'], '2');
+      expect(store.values['formwork.tab'], '3');
+      expect(store.values['roof.tab'], '3');
+      expect(store.values['insulation.tab'], '2');
+
+      // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
+      Future<void> open(String toolId) async {
+        await tester.pumpWidget(
+          EngineeringAssistantApp(
+            settings: settings,
+            key: UniqueKey(),
+            initialTab: 1,
+            initialTool: toolId,
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await open('material');
+      expect(find.text('1 吨'), findsOneWidget);
+      await open('building_area');
+      expect(find.text('S = 20 m² × 1/2 = 10 m²'), findsOneWidget);
+      await open('concrete');
+      expect(find.text('2.88 m³'), findsOneWidget);
+      expect(find.text('V = 6 m × 4 m × 0.12 m = 2.88 m³'), findsOneWidget);
+      await open('earthwork');
+      expect(find.text('127.5 m³'), findsOneWidget);
+      await open('rebar');
+      expect(find.text('3.85 kg/m'), findsOneWidget);
+      await open('masonry');
+      expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
+      await open('formwork');
+      expect(find.textContaining('m²'), findsWidgets);
+      await open('roof');
+      expect(find.text('S = (30 + 20) × 0.24 = 12 m²'), findsOneWidget);
+      await open('insulation');
+      expect(find.text('S = 1.2 × 3 − 0.5 = 3.1 m²'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 600));
+    },
+  );
 
   testWidgets('混凝土构件：手机尺寸下五个 tab 都不溢出', (tester) async {
     await tester.pumpWidget(

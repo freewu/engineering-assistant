@@ -2,7 +2,7 @@
 
 <img src="logo.jpg" alt="应用图标" width="96" align="right" />
 
-应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具、材料用量估算、建筑面积计算、混凝土构件工程量、土石方工程量、钢筋工程量、砌筑工程量、模板工程量与屋面及防水工程量。
+应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具、材料用量估算、建筑面积计算、混凝土构件工程量、土石方工程量、钢筋工程量、砌筑工程量、模板工程量、屋面及防水工程量与保温隔热工程量。
 支持深色 / 浅色主题与五种界面语言（简体中文、繁體中文、English、日本語、Español）。
 
 ![计算器](docs/screenshots/calculator.png)
@@ -58,6 +58,7 @@
 | 砌筑工程 | 砖墙 / 砖基础 / 特殊墙体三个 tab，按 GB/T 50854-2024 清单规则算体积 |
 | 模板工程 | 柱 / 梁 / 墙 / 楼梯四个 tab，算模板与混凝土的接触面积 |
 | 屋面及防水 | 平屋面 / 坡屋面 / 楼地面 / 墙基四个 tab，按面积算防水 |
+| 保温隔热 | 屋面 / 墙面 / 柱三个 tab，算保温面积与体积 |
 
 ![工具](docs/screenshots/tools.png)
 
@@ -71,7 +72,7 @@
 - 数值框随时可以清空：空着的输入不参与计算（结果显示「—」，换算页回到「填入数值后自动换算」的空状态），
   清空这件事本身也会记住，下次进来仍是空的，不会再填回默认值
 
-Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`、`material`、`building_area`、`concrete`、`earthwork`、`rebar`、`masonry`、`formwork`、`roof`）直接打开某个工具。
+Web 端可深链：`?page=tools` 打开工具页（`?page=settings` 打开设置页），`?page=tools&tool=distance`（或 `area`、`volume`、`weight`、`temperature`、`energy`、`pressure`、`speed`、`material`、`building_area`、`concrete`、`earthwork`、`rebar`、`masonry`、`formwork`、`roof`、`insulation`）直接打开某个工具。
 
 ### 材料用量（四个 tab）
 
@@ -256,6 +257,24 @@ L中 30 m、L内 20 m、实铺宽 0.24 m 的墙基 = 12 ㎡。
 
 ![屋面及防水](docs/screenshots/roof.png)
 
+### 保温隔热工程（三个 tab）
+
+面积按设计图示尺寸以㎡计算，体积 = 面积 × 保温层厚度；单个 **≤ 0.3 ㎡** 的孔洞不扣除。
+
+| tab | 面积公式 | 说明 |
+| --- | --- | --- |
+| 屋面 | S = 水平投影面积 − 孔洞面积 | 大于 0.3 ㎡ 的孔洞才扣，找坡时厚度取平均值 |
+| 墙面 | S = 墙长 × 墙高 − 门窗洞口面积 + 洞口侧壁面积 | 洞口侧壁保温并入墙面，≤ 0.3 ㎡ 的洞口不扣 |
+| 柱 | S = 保温层中心线展开长度 × 柱高 − 梁所占面积 | 只有大于 0.3 ㎡ 的梁所占面积才扣除 |
+
+例子：投影 100 ㎡、平均厚度 0.1 m 的屋面 = 100 ㎡ / 10 m³；10 m × 3 m 墙面扣 6 ㎡ 洞口、厚度 50 mm = 24 ㎡ / 1.2 m³；
+中心线展开 1.2 m、柱高 3 m、梁占 0.5 ㎡ 的柱 = 3.1 ㎡ / 0.155 m³。
+
+三个 tab 各自记一份输入（键 `tool.insulation`）；数值清空就不算（结果显示「—」）。
+打开时默认停在哪个 tab 可以在设置页里改（「工程计算默认值」→「保温隔热」，键 `insulation.tab`，默认屋面）。
+
+![保温隔热](docs/screenshots/insulation.png)
+
 ## 设置与多语言
 
 导航栏第四项「设置」里可以切换外观与界面语言，选择立刻生效并记在本机
@@ -276,7 +295,7 @@ L中 30 m、L内 20 m、实铺宽 0.24 m 的墙基 = 12 ㎡。
   卡片里只有「默认单位」一项；八个换算工具的值各存一份，改动长度换算不影响面积换算
 - **工程计算默认值**：材料用量 / 建筑面积 / 混凝土构件 / 土石方工程 / 钢筋工程 / 砌筑工程打开时
   默认停在哪一个 tab（键 `material.tab` / `building_area.tab` / `concrete.tab` / `earthwork.tab` /
-  `rebar.tab` / `masonry.tab` / `formwork.tab` / `roof.tab`，八个工具各存一份，改动只影响自己）
+  `rebar.tab` / `masonry.tab` / `formwork.tab` / `roof.tab` / `insulation.tab`，九个工具各存一份，改动只影响自己）
 - **关于**：版本号与仓库地址，一键复制链接
 
 浅色模式下的计算器（按键、显示屏、工具卡片都已跟着变浅）：

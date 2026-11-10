@@ -13,6 +13,8 @@ import 'package:engineering_assistant/ui/tools/concrete/concrete_member.dart';
 import 'package:engineering_assistant/ui/tools/concrete/concrete_strings.dart';
 import 'package:engineering_assistant/ui/tools/formwork/formwork.dart';
 import 'package:engineering_assistant/ui/tools/formwork/formwork_strings.dart';
+import 'package:engineering_assistant/ui/tools/insulation/insulation.dart';
+import 'package:engineering_assistant/ui/tools/insulation/insulation_strings.dart';
 import 'package:engineering_assistant/ui/tools/masonry/masonry.dart';
 import 'package:engineering_assistant/ui/tools/masonry/masonry_strings.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
@@ -640,6 +642,7 @@ void main() {
         'masonry': kMasonryTabCount,
         'formwork': kFormworkTabCount,
         'roof': kRoofTabCount,
+        'insulation': kInsulationTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1910,6 +1913,136 @@ void main() {
     });
   });
 
+  group('保温隔热工程量', () {
+    test('孔洞：只有大于 0.3 ㎡ 的才扣除', () {
+      expect(kInsulationHoleThreshold, 0.3);
+      expect(deductedArea(0.3), 0);
+      expect(deductedArea(0.31), closeTo(0.31, 1e-9));
+      expect(deductedArea(2.4), closeTo(2.4, 1e-9));
+    });
+
+    test('屋面：S = 投影面积 − 孔洞，V = S × 平均厚度', () {
+      expect(roofInsulationArea(projectedArea: 100), closeTo(100, 1e-9));
+      expect(
+        roofInsulationArea(projectedArea: 100, holeArea: 0.2),
+        closeTo(100, 1e-9),
+      );
+      expect(
+        roofInsulationArea(projectedArea: 100, holeArea: 2),
+        closeTo(98, 1e-9),
+      );
+      expect(insulationVolume(area: 98, thickness: 0.1), closeTo(9.8, 1e-9));
+    });
+
+    test('墙面：S = 墙长 × 墙高 − 洞口 + 侧壁', () {
+      // 10 × 3 − 6 + 0 = 24 ㎡
+      expect(
+        wallInsulationArea(length: 10, height: 3, openingArea: 6),
+        closeTo(24, 1e-9),
+      );
+      // 侧壁并入
+      expect(
+        wallInsulationArea(
+          length: 10,
+          height: 3,
+          openingArea: 6,
+          sideArea: 1.2,
+        ),
+        closeTo(25.2, 1e-9),
+      );
+      // 洞口不足 0.3 ㎡ 不扣
+      expect(
+        wallInsulationArea(length: 10, height: 3, openingArea: 0.3),
+        closeTo(30, 1e-9),
+      );
+      expect(insulationVolume(area: 24, thickness: 0.05), closeTo(1.2, 1e-9));
+    });
+
+    test('柱：S = 中心线展开长度 × 柱高 − 梁所占面积', () {
+      // 1.2 × 3 − 0.5 = 3.1 ㎡
+      expect(
+        columnInsulationArea(
+          perimeterCenterline: 1.2,
+          height: 3,
+          beamArea: 0.5,
+        ),
+        closeTo(3.1, 1e-9),
+      );
+      // 梁所占面积正好 0.3 ㎡ 时不扣
+      expect(
+        columnInsulationArea(
+          perimeterCenterline: 1.2,
+          height: 3,
+          beamArea: 0.3,
+        ),
+        closeTo(3.6, 1e-9),
+      );
+      expect(
+        insulationVolume(area: 3.1, thickness: 0.05),
+        closeTo(0.155, 1e-9),
+      );
+    });
+
+    test('五种语言的「保温隔热」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kInsulationStrings, language);
+        for (final text in <String>[
+          s.tabRoof,
+          s.tabWall,
+          s.tabColumn,
+          s.roofSection,
+          s.projectedArea,
+          s.holeArea,
+          s.avgThickness,
+          s.roofAreaResult,
+          s.roofAreaFormula,
+          s.volumeResult,
+          s.volumeFormula,
+          s.roofHint,
+          s.wallSection,
+          s.wallLength,
+          s.wallHeight,
+          s.openingArea,
+          s.sideArea,
+          s.thickness,
+          s.wallAreaResult,
+          s.wallAreaFormula,
+          s.wallHint,
+          s.columnSection,
+          s.columnPerimeter,
+          s.columnHeight,
+          s.beamArea,
+          s.columnAreaResult,
+          s.columnAreaFormula,
+          s.columnHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 屋面 3 个、墙面 5 个、柱 4 个、体积 3 个占位符
+        for (final formula in <String>[
+          s.roofAreaFormula,
+          s.wallAreaFormula,
+          s.columnAreaFormula,
+          s.volumeFormula,
+        ]) {
+          final expected = formula == s.wallAreaFormula
+              ? 5
+              : formula == s.volumeFormula
+              ? 3
+              : formula == s.columnAreaFormula
+              ? 4
+              : 3;
+          expect(
+            RegExp(r'\{\d\}').allMatches(formula).length,
+            expected,
+            reason: '${language.code} $formula',
+          );
+        }
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1939,10 +2072,10 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 八个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 九个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 16, reason: language.code);
+        expect(visibleTools.length, 17, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
@@ -1952,6 +2085,7 @@ void main() {
           'masonry',
           'formwork',
           'roof',
+          'insulation',
           'distance',
           'area',
           'volume',
@@ -1965,7 +2099,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 16);
+      expect(kTools.length, 17);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1979,7 +2113,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 16);
+      expect(kTools.length, 17);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {

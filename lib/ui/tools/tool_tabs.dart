@@ -5,6 +5,7 @@ import 'formwork/formwork.dart';
 import 'masonry/masonry.dart';
 import 'material/material.dart';
 import 'rebar/rebar.dart';
+import 'insulation/insulation.dart';
 import 'roof/roof.dart';
 
 /// 带 tab 的工具各自有几个 tab。
@@ -20,4 +21,5 @@ const Map<String, int> kToolTabCounts = <String, int>{
   'masonry': kMasonryTabCount,
   'formwork': kFormworkTabCount,
   'roof': kRoofTabCount,
+  'insulation': kInsulationTabCount,
 };
