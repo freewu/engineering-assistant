@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('17 個のアプリ'), findsOneWidget);
+    expect(find.text('18 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1942,7 +1942,7 @@ void main() {
   });
 
   testWidgets(
-    '设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面 / 保温的默认 tab',
+    '设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面 / 保温 / 装饰的默认 tab',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 2400);
       tester.view.devicePixelRatio = 1;
@@ -1977,6 +1977,7 @@ void main() {
       await pick('formwork', '楼梯');
       await pick('roof', '墙基');
       await pick('insulation', '柱');
+      await pick('decoration', '楼地面');
       expect(store.values['material.tab'], '2');
       expect(store.values['building_area.tab'], '5');
       expect(store.values['concrete.tab'], '2');
@@ -1986,6 +1987,7 @@ void main() {
       expect(store.values['formwork.tab'], '3');
       expect(store.values['roof.tab'], '3');
       expect(store.values['insulation.tab'], '2');
+      expect(store.values['decoration.tab'], '2');
 
       // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
       Future<void> open(String toolId) async {

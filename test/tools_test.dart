@@ -19,6 +19,8 @@ import 'package:engineering_assistant/ui/tools/masonry/masonry.dart';
 import 'package:engineering_assistant/ui/tools/masonry/masonry_strings.dart';
 import 'package:engineering_assistant/ui/tools/material/material.dart';
 import 'package:engineering_assistant/ui/tools/distance/distance.dart';
+import 'package:engineering_assistant/ui/tools/decoration/decoration.dart';
+import 'package:engineering_assistant/ui/tools/decoration/decoration_strings.dart';
 import 'package:engineering_assistant/ui/tools/earthwork/earthwork.dart';
 import 'package:engineering_assistant/ui/tools/earthwork/earthwork_strings.dart';
 import 'package:engineering_assistant/ui/tools/energy/energy.dart';
@@ -643,6 +645,7 @@ void main() {
         'formwork': kFormworkTabCount,
         'roof': kRoofTabCount,
         'insulation': kInsulationTabCount,
+        'decoration': kDecorationTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -2043,6 +2046,109 @@ void main() {
     });
   });
 
+  group('装饰装修工程量', () {
+    test('孔洞：只有大于 0.3 ㎡ 的才扣除', () {
+      expect(kDecorationHoleThreshold, 0.3);
+      expect(deductedHole(0.3), 0);
+      expect(deductedHole(0.31), closeTo(0.31, 1e-9));
+      expect(deductedHole(6), closeTo(6, 1e-9));
+    });
+
+    test('墙面：S = 墙长 × 墙高 − 洞口 + 侧壁 + 附墙柱梁', () {
+      // 10 × 3 − 6 = 24 ㎡
+      expect(
+        wallFinishArea(length: 10, height: 3, openingArea: 6),
+        closeTo(24, 1e-9),
+      );
+      // 侧壁与附墙柱梁并入
+      expect(
+        wallFinishArea(
+          length: 10,
+          height: 3,
+          openingArea: 6,
+          sideArea: 1.2,
+          attachedArea: 0.8,
+        ),
+        closeTo(26, 1e-9),
+      );
+      // 洞口正好 0.3 ㎡ 时不扣
+      expect(
+        wallFinishArea(length: 10, height: 3, openingArea: 0.3),
+        closeTo(30, 1e-9),
+      );
+    });
+
+    test('天棚：S = 主墙间净面积 + 梁侧面面积', () {
+      expect(ceilingFinishArea(netArea: 80), closeTo(80, 1e-9));
+      expect(
+        ceilingFinishArea(netArea: 80, beamSideArea: 4),
+        closeTo(84, 1e-9),
+      );
+    });
+
+    test('楼地面：S = 净面积 − 凸出地面构筑物面积', () {
+      expect(floorFinishArea(netArea: 80), closeTo(80, 1e-9));
+      expect(floorFinishArea(netArea: 80, structureArea: 2), closeTo(78, 1e-9));
+      // 不足 0.3 ㎡ 的构筑物不扣
+      expect(
+        floorFinishArea(netArea: 80, structureArea: 0.3),
+        closeTo(80, 1e-9),
+      );
+      // 扣成负数时取 0
+      expect(floorFinishArea(netArea: 1, structureArea: 2), 0);
+    });
+
+    test('五种语言的「装饰装修」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kDecorationStrings, language);
+        for (final text in <String>[
+          s.tabWall,
+          s.tabCeiling,
+          s.tabFloor,
+          s.wallSection,
+          s.wallLength,
+          s.wallHeight,
+          s.openingArea,
+          s.sideArea,
+          s.attachedArea,
+          s.wallResult,
+          s.wallFormula,
+          s.wallHint,
+          s.ceilingSection,
+          s.netArea,
+          s.beamSideArea,
+          s.ceilingResult,
+          s.ceilingFormula,
+          s.ceilingHint,
+          s.floorSection,
+          s.structureArea,
+          s.floorResult,
+          s.floorFormula,
+          s.floorHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 墙面 6 个、天棚 3 个、楼地面 3 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.wallFormula).length,
+          6,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.ceilingFormula).length,
+          3,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.floorFormula).length,
+          3,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -2072,10 +2178,10 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 九个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 十个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 17, reason: language.code);
+        expect(visibleTools.length, 18, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
@@ -2086,6 +2192,7 @@ void main() {
           'formwork',
           'roof',
           'insulation',
+          'decoration',
           'distance',
           'area',
           'volume',
@@ -2099,7 +2206,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 17);
+      expect(kTools.length, 18);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -2113,7 +2220,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 17);
+      expect(kTools.length, 18);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {
