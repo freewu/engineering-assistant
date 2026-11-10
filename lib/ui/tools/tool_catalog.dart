@@ -9,6 +9,7 @@ import 'masonry/defined.dart';
 import 'material/defined.dart';
 import 'pressure/defined.dart';
 import 'rebar/defined.dart';
+import 'roof/defined.dart';
 import 'speed/defined.dart';
 import 'temperature/defined.dart';
 import 'volume/defined.dart';
@@ -21,7 +22,7 @@ export 'tool_info.dart';
 ///
 /// 每项元数据都在各自目录的 `defined.dart` 里声明，这里只负责汇总。
 /// 目前是八个单位换算工具 + 材料用量估算 + 建筑面积 + 混凝土构件 + 土石方工程
-/// + 钢筋工程 + 砌筑工程 + 模板工程，其余工程工具后续逐个补上。
+/// + 钢筋工程 + 砌筑工程 + 模板工程 + 屋面及防水工程，其余工程工具后续逐个补上。
 ///
 /// 用 getter 而不是 `final` 变量：卡片配色取自 [AppColors]，而顶层 `final`
 /// 只在首次访问时求值，切到浅色主题后颜色就会停在旧配色上。
@@ -33,6 +34,7 @@ List<ToolInfo> get kTools => List.unmodifiable(<ToolInfo>[
   rebarTool,
   masonryTool,
   formworkTool,
+  roofTool,
   distanceTool,
   areaTool,
   volumeTool,

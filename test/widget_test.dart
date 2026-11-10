@@ -302,7 +302,7 @@ void main() {
     expect(find.text('長さ換算'), findsOneWidget);
     expect(find.text('面積換算'), findsOneWidget);
     expect(find.text('长度换算'), findsNothing);
-    expect(find.text('15 個のアプリ'), findsOneWidget);
+    expect(find.text('16 個のアプリ'), findsOneWidget);
   });
 
   testWidgets('工具页内部文案：英文界面下标题、字段与说明都是英文', (tester) async {
@@ -1814,7 +1814,80 @@ void main() {
     }
   });
 
-  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板的默认 tab', (
+  testWidgets('屋面及防水：平屋面 / 坡屋面 / 楼地面 / 墙基按面积算', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'roof'),
+    );
+    await tester.pumpAndSettle();
+
+    for (final label in <String>['平屋面', '坡屋面', '楼地面', '墙基']) {
+      expect(find.widgetWithText(Tab, label), findsOneWidget);
+    }
+
+    // 平屋面：100 + 60 × 0.3 = 118 ㎡
+    expect(find.text('118 m²'), findsOneWidget);
+    expect(find.text('S = 100 + 60 × 0.3 = 118 m²'), findsOneWidget);
+
+    // 坡屋面：100 × 1.1547… = 115.47 ㎡
+    await tester.tap(find.widgetWithText(Tab, '坡屋面'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('1.1547'), findsWidgets);
+
+    // 楼地面：80 + 40 × 0.3 = 92 ㎡
+    await tester.tap(find.widgetWithText(Tab, '楼地面'));
+    await tester.pumpAndSettle();
+    expect(find.text('92 m²'), findsOneWidget);
+
+    // 墙基：(30 + 20) × 0.24 = 12 ㎡
+    await tester.tap(find.widgetWithText(Tab, '墙基'));
+    await tester.pumpAndSettle();
+    expect(find.text('12 m²'), findsOneWidget);
+    expect(find.text('S = (30 + 20) × 0.24 = 12 m²'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('屋面及防水：翻边不足 300 mm 时提示不另计', (tester) async {
+    tester.view.physicalSize = const Size(1440, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'roof'),
+    );
+    await tester.pumpAndSettle();
+
+    // 翻边高改成 0.2 m：面积回到 100 ㎡，并给出提示
+    await tester.enterText(find.text('0.3').first, '0.2');
+    await tester.pumpAndSettle();
+    expect(find.text('100 m²'), findsOneWidget);
+    expect(find.textContaining('300 mm'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('屋面及防水：手机尺寸下四个 tab 都不溢出', (tester) async {
+    await tester.pumpWidget(
+      const EngineeringAssistantApp(initialTab: 1, initialTool: 'roof'),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    for (final label in <String>['墙基', '楼地面', '坡屋面', '平屋面']) {
+      await tester.tap(find.widgetWithText(Tab, label));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('设置里可以改材料用量 / 建筑面积 / 混凝土构件 / 土石方 / 钢筋 / 砌筑 / 模板 / 屋面的默认 tab', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1440, 2400);
@@ -1848,6 +1921,7 @@ void main() {
     await pick('rebar', '速查表');
     await pick('masonry', '特殊墙体');
     await pick('formwork', '楼梯');
+    await pick('roof', '墙基');
     expect(store.values['material.tab'], '2');
     expect(store.values['building_area.tab'], '5');
     expect(store.values['concrete.tab'], '2');
@@ -1855,6 +1929,7 @@ void main() {
     expect(store.values['rebar.tab'], '3');
     expect(store.values['masonry.tab'], '2');
     expect(store.values['formwork.tab'], '3');
+    expect(store.values['roof.tab'], '3');
 
     // 打开三个工具：各自停在设置里选的 tab，默认值已经算好
     Future<void> open(String toolId) async {
@@ -1884,6 +1959,8 @@ void main() {
     expect(find.text('V = 10 × 3 × 0.24 = 7.2 m³'), findsOneWidget);
     await open('formwork');
     expect(find.textContaining('m²'), findsWidgets);
+    await open('roof');
+    expect(find.text('S = (30 + 20) × 0.24 = 12 m²'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 600));
   });
 

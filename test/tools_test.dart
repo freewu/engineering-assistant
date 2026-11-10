@@ -23,6 +23,8 @@ import 'package:engineering_assistant/ui/tools/energy/energy.dart';
 import 'package:engineering_assistant/ui/tools/tool_tabs.dart';
 import 'package:engineering_assistant/ui/tools/pressure/pressure.dart';
 import 'package:engineering_assistant/ui/tools/rebar/rebar.dart';
+import 'package:engineering_assistant/ui/tools/roof/roof.dart';
+import 'package:engineering_assistant/ui/tools/roof/roof_strings.dart';
 import 'package:engineering_assistant/ui/tools/rebar/rebar_strings.dart';
 import 'package:engineering_assistant/ui/tools/speed/speed.dart';
 import 'package:engineering_assistant/ui/tools/temperature/temperature.dart';
@@ -637,6 +639,7 @@ void main() {
         'rebar': kRebarTabCount,
         'masonry': kMasonryTabCount,
         'formwork': kFormworkTabCount,
+        'roof': kRoofTabCount,
       });
       for (final id in kToolTabCounts.keys) {
         expect(settings.toolTabFor(id), 0, reason: id);
@@ -1785,6 +1788,128 @@ void main() {
     });
   });
 
+  group('屋面及防水工程量', () {
+    test('翻边：高度 ≥ 300 mm 才按展开面积并入', () {
+      expect(kUpturnThreshold, 0.3);
+      expect(upturnArea(length: 60, height: 0.3), closeTo(18, 1e-9));
+      expect(upturnArea(length: 60, height: 0.5), closeTo(30, 1e-9));
+      // 不足 300 mm 不另计
+      expect(upturnArea(length: 60, height: 0.2), 0);
+      expect(upturnArea(length: 60, height: 0.29), 0);
+    });
+
+    test('平屋面：S = 主墙间净面积 + 翻边展开面积', () {
+      // 100 + 60 × 0.3 = 118 ㎡
+      expect(
+        flatRoofArea(netArea: 100, upturnLength: 60, upturnHeight: 0.3),
+        closeTo(118, 1e-9),
+      );
+      // 没有翻边时就是净面积
+      expect(flatRoofArea(netArea: 100), closeTo(100, 1e-9));
+    });
+
+    test('坡屋面：S = 水平投影面积 × 延尺系数 C', () {
+      // C = 1 / cos30° ≈ 1.1547
+      expect(slopeFactor(30), closeTo(1.154700538, 1e-9));
+      expect(slopeFactor(0), closeTo(1, 1e-9));
+      expect(slopeFactor(45), closeTo(1.414213562, 1e-9));
+      expect(
+        pitchedRoofArea(projectedArea: 100, angleDegrees: 30),
+        closeTo(115.4700538, 1e-6),
+      );
+    });
+
+    test('楼地面防水与墙基防水', () {
+      // 80 + 40 × 0.3 = 92 ㎡
+      expect(
+        floorWaterproofArea(netArea: 80, upturnLength: 40, upturnHeight: 0.3),
+        closeTo(92, 1e-9),
+      );
+      // 翻边只有 200 mm 时不另计
+      expect(
+        floorWaterproofArea(netArea: 80, upturnLength: 40, upturnHeight: 0.2),
+        closeTo(80, 1e-9),
+      );
+      // （30 + 20）× 0.24 = 12 ㎡
+      expect(
+        wallBaseWaterproofArea(
+          centerlineLength: 30,
+          netLength: 20,
+          width: 0.24,
+        ),
+        closeTo(12, 1e-9),
+      );
+    });
+
+    test('五种语言的「屋面及防水」文案齐全', () {
+      for (final language in AppLanguage.values) {
+        final s = toolTextFor(kRoofStrings, language);
+        for (final text in <String>[
+          s.tabFlat,
+          s.tabSlope,
+          s.tabFloor,
+          s.tabBase,
+          s.flatSection,
+          s.netArea,
+          s.upturnLength,
+          s.upturnHeight,
+          s.flatResult,
+          s.flatFormula,
+          s.upturnIgnored,
+          s.flatHint,
+          s.slopeSection,
+          s.projectedArea,
+          s.slopeAngle,
+          s.slopeResult,
+          s.slopeFormula,
+          s.slopeHint,
+          s.floorSection,
+          s.floorNetArea,
+          s.floorUpturnLength,
+          s.floorResult,
+          s.floorFormula,
+          s.floorHint,
+          s.baseSection,
+          s.centerlineLength,
+          s.netLength,
+          s.baseWidth,
+          s.baseResult,
+          s.baseFormula,
+          s.baseHint,
+          s.note,
+        ]) {
+          expect(text, isNotEmpty, reason: language.code);
+        }
+        // 平屋面 / 楼地面 4 个、坡屋面 3 个、墙基 4 个占位符
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.flatFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.floorFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.slopeFormula).length,
+          3,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.baseFormula).length,
+          4,
+          reason: language.code,
+        );
+        expect(
+          RegExp(r'\{\d\}').allMatches(s.upturnIgnored).length,
+          0,
+          reason: language.code,
+        );
+      }
+    });
+  });
+
   group('多语言：五种语言的文案表', () {
     test('每种语言都有完整且互不相同的界面文案', () {
       final titles = <String>{};
@@ -1814,10 +1939,10 @@ void main() {
       expect(titles.length, greaterThanOrEqualTo(4));
     });
 
-    test('八个换算工具 + 七个工程工具在所有界面语言下都展示', () {
+    test('八个换算工具 + 八个工程工具在所有界面语言下都展示', () {
       for (final language in AppLanguage.values) {
         applyAppLanguage(language);
-        expect(visibleTools.length, 15, reason: language.code);
+        expect(visibleTools.length, 16, reason: language.code);
         for (final id in <String>[
           'material',
           'building_area',
@@ -1826,6 +1951,7 @@ void main() {
           'rebar',
           'masonry',
           'formwork',
+          'roof',
           'distance',
           'area',
           'volume',
@@ -1839,7 +1965,7 @@ void main() {
         }
       }
       applyAppLanguage(AppLanguage.zhHans);
-      expect(kTools.length, 15);
+      expect(kTools.length, 16);
     });
 
     test('每个工具的语言包都有五种语言，且 id 唯一', () {
@@ -1853,7 +1979,7 @@ void main() {
           expect(text.tagline, isNotEmpty);
         }
       }
-      expect(kTools.length, 15);
+      expect(kTools.length, 16);
     });
 
     test('工具名称随语言变化，缺翻译时回落简体中文', () {
