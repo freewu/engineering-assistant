@@ -2161,6 +2161,26 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
+  testWidgets('工具页卡片：上图标、下名称，卖点不在卡片上显示', (tester) async {
+    await pumpApp(tester, const Size(1440, 900));
+
+    await tester.tap(find.text('工具'));
+    await tester.pumpAndSettle();
+
+    final name = find.text('长度换算');
+    expect(name, findsOneWidget);
+    // 卡片内的图标：图标整体在名称上方，且两者水平居中
+    final card = find.ancestor(of: name, matching: find.byType(InkWell)).first;
+    final icon = find.descendant(of: card, matching: find.byType(Icon)).first;
+    final iconCenter = tester.getCenter(icon);
+    final nameCenter = tester.getCenter(name);
+    expect(iconCenter.dy, lessThan(nameCenter.dy));
+    expect((iconCenter.dx - nameCenter.dx).abs(), lessThan(1));
+    // 卖点只参与搜索，不在卡片上显示
+    expect(find.text('公制英制，一屏换算'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('工具页：手机尺寸下卡片与工具页不溢出', (tester) async {
     await pumpApp(tester, const Size(390, 844));
 

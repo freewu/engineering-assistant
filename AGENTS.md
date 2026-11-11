@@ -95,7 +95,8 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   （取不到回落简体原文，`zhHant` 也用原文），单位说明用 `notes` + `noteIn()`
   （en / ja / es 三份，中文回落原文、缺翻译回落英文）。新增单位必须补 en / ja / es 三项，
   带说明的单位说明也要三份，`test/tools_test.dart` 会遍历各 catalog 检查。
-- **界面文案一律走多语言**：应用级（导航、设置、工具页标题）用 `t.xxx`（`lib/l10n/app_strings.dart` 里 `AppStrings` 的五个实现都要补），工具卡片名称 / 卖点写进 `lib/ui/tools/<tool>/<tool>_lang.dart` 的 `k<Tool>Lang`（`ToolText` 只有这两项，卡片不再显示长说明）。注释用中文，界面文案用各语言母语。
+- **界面文案一律走多语言**：应用级（导航、设置、工具页标题）用 `t.xxx`（`lib/l10n/app_strings.dart` 里 `AppStrings` 的五个实现都要补），工具卡片名称 / 卖点写进 `lib/ui/tools/<tool>/<tool>_lang.dart` 的 `k<Tool>Lang`（`ToolText` 只有这两项，卡片不再显示长说明）。
+  工具卡片是「上图标、下名称」的方形格子（`lib/ui/tools_page.dart` 的 `_ToolCard`），名称最多两行；卖点只参与搜索，不在卡片上显示。注释用中文，界面文案用各语言母语。
 - **计算器页的文案单独成表**：`lib/l10n/calc_strings.dart`（`kCalcStrings`），写法同工具页
   `<tool>_strings.dart`。内置函数的说明按函数名查表
   （`CalcStrings.functionDescriptions` + `functionDescription()`）：

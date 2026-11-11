@@ -245,11 +245,11 @@ class _ToolsBodyState extends State<_ToolsBody> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid.builder(
-        // 卡片只有图标 + 名称 + 卖点，宽度取 240：1440 宽时排 6 列，
-        // 手机（390）也能排下两列
+        // 卡片是「上图标、下名称」的方形格子，宽度取 132：1440 宽时排 10 列，
+        // 手机（390）排三列
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 240,
-          mainAxisExtent: 84,
+          maxCrossAxisExtent: 132,
+          mainAxisExtent: 104,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
@@ -337,7 +337,7 @@ class _ToolsBodyState extends State<_ToolsBody> {
   }
 }
 
-/// 商店风格的应用卡片。
+/// 商店风格的应用卡片：上面是图标，下面是工具名称（居中，最多两行）。
 class _ToolCard extends StatelessWidget {
   const _ToolCard({
     required this.tool,
@@ -382,15 +382,16 @@ class _ToolCard extends StatelessWidget {
                   context,
                 ).push(MaterialPageRoute<void>(builder: tool.pageBuilder)),
                 child: Padding(
-                  // 右上角留给图钉，文字别顶到它下面
-                  padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-                  child: Row(
+                  // 右上角留给图钉，图标与名称整体居中
+                  padding: const EdgeInsets.fromLTRB(10, 13, 10, 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 38,
-                        height: 38,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(11),
+                          borderRadius: BorderRadius.circular(12),
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -402,46 +403,21 @@ class _ToolCard extends StatelessWidget {
                         ),
                         child: Icon(
                           tool.icon,
-                          size: 20,
+                          size: 21,
                           color: AppColors.onPrimary,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 20),
-                              child: Text(
-                                tool.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              tool.tagline,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: tool.color,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        tool.name,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          height: 1.2,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
-                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
