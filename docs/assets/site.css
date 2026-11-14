@@ -39,7 +39,7 @@
 
   --radius: 18px;
   --radius-sm: 12px;
-  --maxw: 1160px;
+  --maxw: 1240px;
 }
 
 [data-theme='light'] {
@@ -354,8 +354,8 @@ main {
 
 .hero {
   display: grid;
-  grid-template-columns: 1.02fr 0.98fr;
-  gap: 52px;
+  grid-template-columns: 0.84fr 1.16fr;
+  gap: 46px;
   align-items: center;
   padding: 76px 0 84px;
 }
@@ -570,8 +570,8 @@ main {
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
 }
 
 .tool {
@@ -612,7 +612,7 @@ main {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px 16px;
+  padding: 13px 15px 15px;
 }
 
 .tool-body .glyph {
@@ -649,8 +649,8 @@ main {
 
 .screens-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
 }
 
 .page-shot {
@@ -840,7 +840,8 @@ main {
   }
 
   .feature-grid,
-  .tools-grid {
+  .tools-grid,
+  .screens-grid {
     grid-template-columns: 1fr;
   }
 
