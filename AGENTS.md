@@ -125,4 +125,14 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
 - Android 自适应图标 XML（`mipmap-anydpi-v26/*.xml`）必须声明 `xmlns:android`，否则 AAPT2 编译失败；`just icons-check` 会校验这一项。
 - Web 产物必须自包含：`just build-web` 走 `--no-web-resources-cdn`（CanvasKit 取 SDK 自带副本），并把 `web/fonts/`（`tool/web_fonts.py` 下载的 Roboto / Noto 回退字体）拷进 `build/web/fonts/`，配合 `web/flutter_bootstrap.js` 的 `fontFallbackBaseUrl: "fonts/"`。改 Web 构建相关配置后，用「阻断外网 + headless Chrome 截图」验证断网可正常渲染（做法见 README《Web 部署》）。
 - 截图 / 离线演示一律用 `just shots`（内部就是 `just build-web`），不要用 `build-web-cdn`，否则内网或断网环境会白屏、文字变方块。
+- **官网是纯静态页面**：`docs/index.html` + `docs/assets/site.css` + `docs/assets/site.js` +
+  `docs/assets/logo.png`，只用原生 HTML / CSS / JS，不引外部字体与框架（断网、内网都能打开）。
+  站点只有简 / 繁 / 英三种语言：文案在 `site.js` 的 `STRINGS`（三份必须补齐，缺 key 回落简体），
+  工具名称与卖点在 `TOOLS`，要与 `lib/ui/tools/<tool>/<tool>_lang.dart` 保持一致，新增工具时同步加一条；
+  配色取 `AppPalette` 的色值，改配色要连 `site.css` 一起改。支持 `?lang=zh-Hans|zh-Hant|en` 与
+  `?theme=light|dark`，选择也记在 `localStorage`（键 `ea.site.lang` / `ea.site.theme`）。
+- **官网截图与站点语言一一对应**：`docs/shots/<语言>/*.png` 是带 `?lang=` 打开的实机截图，
+  由 `just site-shots`（`tool/screenshot.sh --site`）生成，切换站点语言时整组换图，不要拿同一张图配三套文案。
+  改界面 / 新增工具后重跑 `just site-shots`；`just site-check`（已挂在 `just check`）会校验
+  三种语言的截图是否齐全，`just site` 可在 <http://localhost:8766> 预览官网。
 - **不要给 justfile 写 shebang 配方**（`#!/usr/bin/env sh`）：Windows 上 just 会用 `cygpath` 翻译解释器路径，而 Git for Windows 默认没把 `usr/bin` 放进 PATH，会直接报 `could not find cygpath`。用普通配方 + 行尾 `\` 连接（见 `build-apk`）。

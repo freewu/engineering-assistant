@@ -4,6 +4,7 @@
 
 应用名「工程助手」，使用 Flutter 开发的一款面向工程人员的计算工具集：表达式计算、八个单位换算工具、材料用量估算、建筑面积计算、混凝土构件工程量、土石方工程量、钢筋工程量、砌筑工程量、模板工程量、屋面及防水工程量、保温隔热工程量、装饰装修工程量与油漆涂料工程量。
 支持深色 / 浅色主题与五种界面语言（简体中文、繁體中文、English、日本語、Español）。
+官网（纯静态）在 `docs/index.html`，本地用 `just site` 预览。
 
 ![计算器](docs/screenshots/calculator.png)
 ## 功能
@@ -448,6 +449,26 @@ Web 端可用 `?page=tools` 直接打开工具页，`?page=tools&tool=distance` 
 `Failed to load font Roboto at https://fonts.gstatic.com/...` 与
 `Failed to fetch dynamically imported module: https://www.gstatic.com/flutter-canvaskit/...`。
 
+## 官网
+
+`docs/index.html` 是纯静态官网（把 GitHub Pages 的站点目录设成 `docs/` 即可发布），
+只依赖同目录的 `docs/assets/site.css`、`docs/assets/site.js` 与 `docs/assets/logo.png`：
+
+- **三种界面语言**：简体中文 / 繁體中文 / English，右上角切换，选择记在 `localStorage`；
+  也支持 `?lang=zh-Hans|zh-Hant|en` 深链
+- **深色 / 浅色**：默认跟随系统，手动切换后记住；`?theme=light|dark` 可直接指定。
+  配色沿用 App 的 `kDarkPalette` / `kLightPalette`，改配色时两边一起改
+- **截图与站点语言一致**：每个页面与每个工具在三种语言下各有一张实机截图，
+  放在 `docs/shots/<语言>/`（`?lang=...` 打开的 Web 版拍的），切语言时截图整组一起换，
+  不是同一张图配三套文案
+- 不引任何外部字体 / 框架，断网、内网都能正常打开
+
+```bash
+just site        # 本地预览官网 http://localhost:8766
+just site-shots  # 先离线构建 Web，再用无头 Chrome 重拍三种语言的截图
+just site-check  # 只校验截图是否齐全（不启动浏览器，已挂在 just check 上）
+```
+
 ## 开发命令（just）
 
 项目用 [just](https://github.com/casey/just) 管理常用任务，`just` 不带参数即可列出全部命令。
@@ -484,6 +505,8 @@ just devices      # 列出设备
 | 构建 | `just ci` | 依赖 → 检查 → 构建 |
 | 工具 | `just preview` | 构建并本地预览（<http://localhost:8765>） |
 | 工具 | `just shots` | 重新生成 `docs/screenshots` 截图 |
+| 官网 | `just site` | 本地预览官网（`docs/`，<http://localhost:8766>） |
+| 官网 | `just site-shots` / `just site-check` | 生成 / 校验官网的多语言截图（`docs/shots/<语言>/`） |
 | 工具 | `just icons` / `just icons-check` | 由 `logo.jpg` 生成 / 校验各平台图标（`--selftest` 已在 `tool-check` 里跑） |
 | 工具 | `just clean` / `just outdated` | 清理产物 / 查看可升级依赖 |
 
@@ -592,6 +615,7 @@ lib/
 └── theme/      深色 / 浅色两套配色与 ThemeData
 test/           引擎、LaTeX、工具算法、Widget 测试
 tool/           辅助脚本（截图、图标生成、Android 环境探测）
+docs/           官网（index.html + assets/）、README 截图（screenshots/）与官网多语言截图（shots/<语言>/）
 justfile        常用开发任务
 ```
 

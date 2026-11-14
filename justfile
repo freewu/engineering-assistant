@@ -158,9 +158,9 @@ cover:
     @{{flutter}} test --coverage
     @echo "覆盖率报告：coverage/lcov.info"
 
-# 提交前检查：格式 + 分析 + 测试
+# 提交前检查：格式 + 分析 + 测试 + 辅助脚本自检 + 官网截图齐全
 [group('质量')]
-check: fmt-check analyze test tool-check
+check: fmt-check analyze test tool-check site-check
     @echo "✓ 检查全部通过"
 
 # ---------------------------------------------------------------- 构建
@@ -281,6 +281,26 @@ tool-check:
 [group('工具')]
 shots: build-web-offline
     @{{sh}} tool/screenshot.sh "{{port}}"
+
+# ---------------------------------------------------------------- 官网
+# 本地预览官网（docs/ 目录，默认 http://localhost:8766）
+[group('官网')]
+site port="8766":
+    @echo "官网预览：http://localhost:{{port}}/（docs/index.html）"
+    @{{python}} -m http.server {{port}} --directory docs
+
+# 生成官网用的多语言截图：docs/shots/{zh-Hans,zh-Hant,en}/
+#
+# 每张都是带 ?lang= 打开的实机截图，站点切语言时换来的是同语言的界面。
+# 与 just shots 一样先离线构建，避免 CDN 不可达时截出白屏。
+[group('官网')]
+site-shots: build-web-offline
+    @{{sh}} tool/screenshot.sh "{{port}}" --site
+
+# 校验官网截图是否齐全（CI 可用，不启动浏览器）
+[group('官网')]
+site-check:
+    @{{sh}} tool/screenshot.sh --check
 
 # 清理构建产物
 [group('工具')]

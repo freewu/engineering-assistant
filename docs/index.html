@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-Hans" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>工程助手 · 工程人员的计算工具集</title>
+    <meta
+      id="meta-desc"
+      name="description"
+      content="工程助手：表达式计算、八个单位换算与十一项工程量计算，全部内置、离线可用。Web / Windows / Android 同一套界面，支持深色浅色与多语言。"
+    />
+    <meta id="meta-theme" name="theme-color" content="#0A0E14" />
+    <meta id="meta-og-title" property="og:title" content="工程助手 · 工程人员的计算工具集" />
+    <meta
+      id="meta-og-desc"
+      property="og:description"
+      content="表达式计算、八个单位换算与十一项工程量计算，全部内置、离线可用。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="assets/logo.png" />
+    <link rel="icon" href="assets/logo.png" />
+    <link rel="apple-touch-icon" href="assets/logo.png" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="a11y.skip">跳到主要内容</a>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top">
+          <img
+            class="brand-logo"
+            src="assets/logo.png"
+            alt=""
+            width="36"
+            height="36"
+          />
+          <span class="brand-text">
+            <strong data-i18n="app.name">工程助手</strong>
+            <small data-i18n="app.sub">工程人员的计算工具集</small>
+          </span>
+        </a>
+
+        <nav class="nav-links">
+          <a href="#features" data-i18n="nav.features">功能</a>
+          <a href="#tools" data-i18n="nav.tools">工具</a>
+          <a href="#screens" data-i18n="nav.screens">截图</a>
+          <a href="#platforms" data-i18n="nav.platforms">平台</a>
+        </nav>
+
+        <div class="topbar-actions">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-set-lang="zh-Hans" title="简体中文">
+              简
+            </button>
+            <button type="button" data-set-lang="zh-Hant" title="繁體中文">
+              繁
+            </button>
+            <button type="button" data-set-lang="en" title="English">EN</button>
+          </div>
+          <button
+            class="icon-btn"
+            id="theme-toggle"
+            type="button"
+            data-i18n-title="theme.toDark"
+          >
+            <span aria-hidden="true" id="theme-icon">☀️</span>
+          </button>
+          <a
+            class="gh-link"
+            href="https://github.com/freewu/engineering-assistant"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+              />
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="hero.eyebrow">
+            Flutter · Web / Windows / Android
+          </p>
+          <h1 data-i18n="hero.title">工程计算，随手就来</h1>
+          <p class="lead" data-i18n="hero.lead">
+            表达式计算、八个单位换算与十一项工程量计算，全部内置、离线可用；深色浅色随心切换，Web、Windows、Android
+            是同一套界面。
+          </p>
+          <div class="cta">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/freewu/engineering-assistant/releases"
+              target="_blank"
+              rel="noopener"
+              data-i18n="hero.ctaPrimary"
+              >下载安装</a
+            >
+            <a
+              class="btn btn-ghost"
+              href="https://github.com/freewu/engineering-assistant"
+              target="_blank"
+              rel="noopener"
+              data-i18n="hero.ctaSecondary"
+              >浏览源码</a
+            >
+          </div>
+          <ul class="chips">
+            <li data-i18n="hero.chip1">离线可用</li>
+            <li data-i18n="hero.chip2">深色 · 浅色</li>
+            <li data-i18n="hero.chip3">五种语言</li>
+            <li data-i18n="hero.chip4">免费开源</li>
+          </ul>
+        </div>
+        <figure class="hero-shot">
+          <a
+            class="shot-frame"
+            data-shot="calculator"
+            href="shots/zh-Hans/calculator.png"
+          >
+            <img
+              data-shot="calculator"
+              src="shots/zh-Hans/calculator.png"
+              alt=""
+              width="1440"
+              height="900"
+            />
+          </a>
+          <figcaption data-i18n="hero.shotCaption">实机截图 · 简体中文</figcaption>
+        </figure>
+      </section>
+
+      <section class="section" id="features">
+        <header class="section-head">
+          <h2 data-i18n="features.title">功能</h2>
+          <p data-i18n="features.lead">
+            一个 App 覆盖从表达式到工程量的全部日常计算。
+          </p>
+        </header>
+        <div class="feature-grid">
+          <article class="feature">
+            <span class="glyph" data-accent="0" aria-hidden="true">∑</span>
+            <h3 data-i18n="features.calc.title">表达式计算</h3>
+            <p data-i18n="features.calc.body">
+              自研词法与递归下降解析，支持隐式乘法、幂运算右结合与 48
+              个内置函数；定积分、数值求导、求和连乘都能直接算。
+            </p>
+          </article>
+          <article class="feature">
+            <span class="glyph" data-accent="1" aria-hidden="true">⇄</span>
+            <h3 data-i18n="features.convert.title">单位换算</h3>
+            <p data-i18n="features.convert.body">
+              长度、面积、容量、重量、温度、热量、压力、速度八个工具，按公制 /
+              英制 / 市制分体系，结果一屏列全，点一下即复制。
+            </p>
+          </article>
+          <article class="feature">
+            <span class="glyph" data-accent="2" aria-hidden="true">📐</span>
+            <h3 data-i18n="features.quantity.title">工程量计算</h3>
+            <p data-i18n="features.quantity.body">
+              材料用量、建筑面积、混凝土构件、土石方、钢筋、砌筑、模板、屋面及防水、保温隔热、装饰装修与油漆涂料，按
+              GB/T 50854-2024 清单规则算。
+            </p>
+          </article>
+          <article class="feature">
+            <span class="glyph" data-accent="3" aria-hidden="true">✈</span>
+            <h3 data-i18n="features.offline.title">离线可用</h3>
+            <p data-i18n="features.offline.body">
+              引擎、字体、图标全部内置，运行时不请求网络，工地上没信号也能照常用。
+            </p>
+          </article>
+          <article class="feature">
+            <span class="glyph" data-accent="4" aria-hidden="true">◐</span>
+            <h3 data-i18n="features.theme.title">深色 · 浅色</h3>
+            <p data-i18n="features.theme.body">
+              默认深色科学计算器配色，浅色下同一套色相压暗；可以跟随系统，也可以手动固定。
+            </p>
+          </article>
+          <article class="feature">
+            <span class="glyph" data-accent="5" aria-hidden="true">✓</span>
+            <h3 data-i18n="features.memory.title">记得你填过什么</h3>
+            <p data-i18n="features.memory.body">
+              每个工具都记住上次的数字与选项，输入停一下就存盘；常用工具可以置顶到最前面。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="tools">
+        <header class="section-head">
+          <h2 data-i18n="tools.title">十九个工具，一个入口</h2>
+          <p data-i18n="tools.lead">
+            工具页里点开即用。下面是每个工具的实机截图，点开可以看大图；切换站点语言，截图里的界面也跟着换。
+          </p>
+          <p class="section-note" data-i18n="tools.count">
+            8 个单位换算 · 11 个工程量计算
+          </p>
+        </header>
+        <div class="tools-grid" id="tools-grid"></div>
+      </section>
+
+      <section class="section" id="screens">
+        <header class="section-head">
+          <h2 data-i18n="screens.title">界面截图</h2>
+          <p data-i18n="screens.lead">
+            工具页与设置页，截图与站点语言一致。
+          </p>
+        </header>
+        <div class="screens-grid">
+          <figure class="page-shot">
+            <a
+              data-shot="tools"
+              href="shots/zh-Hans/tools.png"
+              class="shot-link"
+            >
+              <img
+                data-shot="tools"
+                src="shots/zh-Hans/tools.png"
+                alt=""
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </a>
+            <figcaption data-i18n="screens.tools">工具页</figcaption>
+          </figure>
+          <figure class="page-shot">
+            <a
+              data-shot="settings"
+              href="shots/zh-Hans/settings.png"
+              class="shot-link"
+            >
+              <img
+                data-shot="settings"
+                src="shots/zh-Hans/settings.png"
+                alt=""
+                width="1440"
+                height="2220"
+                loading="lazy"
+              />
+            </a>
+            <figcaption data-i18n="screens.settings">设置页</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="platforms">
+        <header class="section-head">
+          <h2 data-i18n="platforms.title">平台</h2>
+          <p data-i18n="platforms.lead">同一套代码，三个平台。</p>
+        </header>
+        <div class="platform-grid">
+          <article class="platform">
+            <span class="glyph" data-accent="0" aria-hidden="true">◎</span>
+            <h3>Web</h3>
+            <p data-i18n="platforms.web.body">
+              浏览器直接打开。构建产物自包含（CanvasKit 与字体都在本地），拷到内网服务器即可离线使用。
+            </p>
+          </article>
+          <article class="platform">
+            <span class="glyph" data-accent="1" aria-hidden="true">▣</span>
+            <h3>Windows</h3>
+            <p data-i18n="platforms.windows.body">
+              原生桌面窗口，物理键盘输入更快，适合和图纸一起开着用。
+            </p>
+          </article>
+          <article class="platform">
+            <span class="glyph" data-accent="2" aria-hidden="true">▤</span>
+            <h3>Android</h3>
+            <p data-i18n="platforms.android.body">
+              手机、平板随身带，APK 直接安装，工地上随手算。
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="assets/logo.png" alt="" width="28" height="28" />
+          <span>
+            <strong data-i18n="app.name">工程助手</strong>
+            <small data-i18n="footer.built">用 Flutter 构建</small>
+          </span>
+        </div>
+        <p class="footer-meta">
+          <span>MIT License</span>
+          <span aria-hidden="true">·</span>
+          <a
+            href="https://github.com/freewu/engineering-assistant"
+            target="_blank"
+            rel="noopener"
+            data-i18n="nav.repo"
+            >源码</a
+          >
+        </p>
+        <p class="footer-note" data-i18n="footer.shots">
+          截图由 just site-shots 生成，与站点语言一致。
+        </p>
+      </div>
+    </footer>
+
+    <div class="lightbox" id="lightbox" hidden>
+      <button
+        class="lightbox-close"
+        id="lightbox-close"
+        type="button"
+        data-i18n-title="lightbox.close"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+      <figure>
+        <img id="lightbox-img" alt="" />
+        <figcaption id="lightbox-caption"></figcaption>
+      </figure>
+    </div>
+
+    <script src="assets/site.js"></script>
+  </body>
+</html>
