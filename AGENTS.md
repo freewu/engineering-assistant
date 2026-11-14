@@ -133,6 +133,8 @@ cmd.exe /c "cd /d $(wslpath -w "$PWD") && flutter test"
   `?theme=light|dark`，选择也记在 `localStorage`（键 `ea.site.lang` / `ea.site.theme`）。
 - **官网截图与站点语言一一对应**：`docs/shots/<语言>/*.png` 是带 `?lang=` 打开的实机截图，
   由 `just site-shots`（`tool/screenshot.sh --site`）生成，切换站点语言时整组换图，不要拿同一张图配三套文案。
+  **官网只放手机竖屏截图**（390×844、2 倍像素密度，页面上套 `.phone` 外壳），桌面布局的
+  `docs/screenshots/*.png` 只给 README 用；`tool/screenshot.sh` 的清单里第五列之前是像素倍率。
   改界面 / 新增工具后重跑 `just site-shots`；`just site-check`（已挂在 `just check`）会校验
   三种语言的截图是否齐全，`just site` 可在 <http://localhost:8766> 预览官网。
 - **不要给 justfile 写 shebang 配方**（`#!/usr/bin/env sh`）：Windows 上 just 会用 `cygpath` 翻译解释器路径，而 Git for Windows 默认没把 `usr/bin` 放进 PATH，会直接报 `could not find cygpath`。用普通配方 + 行尾 `\` 连接（见 `build-apk`）。

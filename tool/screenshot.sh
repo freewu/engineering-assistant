@@ -52,30 +52,35 @@ TOOL_IDS=(
 # 官网支持的语言目录（与 docs/assets/site.js 的 SITE_LANGS 一致）
 SITE_LANGS=(zh-Hans zh-Hant en)
 
-# 截图清单：目录|文件名|窗口尺寸|URL。README 与官网各一份，拍摄与校验共用。
+# 截图清单：目录|文件名|窗口尺寸|像素倍率|URL。README 与官网各一份，拍摄与校验共用。
+# README 要桌面布局（1440 宽），官网只要手机尺寸（390×844，2 倍像素密度，看着才不糊）。
 plan_readme() {
-  echo "docs/screenshots|calculator|1440,900|index.html"
-  echo "docs/screenshots|tools|1440,900|index.html?page=tools"
+  echo "docs/screenshots|calculator|1440,900|1|index.html"
+  echo "docs/screenshots|tools|1440,900|1|index.html?page=tools"
   local id
   for id in "${TOOL_IDS[@]}"; do
-    echo "docs/screenshots|$id|1440,900|index.html?page=tools&tool=$id"
+    echo "docs/screenshots|$id|1440,900|1|index.html?page=tools&tool=$id"
   done
-  echo "docs/screenshots|settings|1440,2220|index.html?page=settings"
-  echo "docs/screenshots|light|1440,900|index.html?theme=light"
-  echo "docs/screenshots|english|1440,900|index.html?page=tools&tool=distance&lang=en"
-  echo "docs/screenshots|zh-hant|1440,900|index.html?page=tools&tool=temperature&lang=zh-Hant"
-  echo "docs/screenshots|mobile|414,896|index.html"
+  echo "docs/screenshots|settings|1440,2220|1|index.html?page=settings"
+  echo "docs/screenshots|light|1440,900|1|index.html?theme=light"
+  echo "docs/screenshots|english|1440,900|1|index.html?page=tools&tool=distance&lang=en"
+  echo "docs/screenshots|zh-hant|1440,900|1|index.html?page=tools&tool=temperature&lang=zh-Hant"
+  echo "docs/screenshots|mobile|414,896|1|index.html"
 }
+
+# 官网只拍手机竖屏（390×844 是 iPhone 14 的逻辑尺寸），页面与工具都按 App 的样子展示。
+SITE_VIEWPORT="390,844"
+SITE_SCALE=2
 
 plan_site() {
   local lang id
   for lang in "${SITE_LANGS[@]}"; do
-    echo "docs/shots/$lang|calculator|1440,900|index.html?lang=$lang"
-    echo "docs/shots/$lang|tools|1440,900|index.html?page=tools&lang=$lang"
+    echo "docs/shots/$lang|calculator|$SITE_VIEWPORT|$SITE_SCALE|index.html?lang=$lang"
+    echo "docs/shots/$lang|tools|$SITE_VIEWPORT|$SITE_SCALE|index.html?page=tools&lang=$lang"
     for id in "${TOOL_IDS[@]}"; do
-      echo "docs/shots/$lang|$id|1440,900|index.html?page=tools&tool=$id&lang=$lang"
+      echo "docs/shots/$lang|$id|$SITE_VIEWPORT|$SITE_SCALE|index.html?page=tools&tool=$id&lang=$lang"
     done
-    echo "docs/shots/$lang|settings|1440,2220|index.html?page=settings&lang=$lang"
+    echo "docs/shots/$lang|settings|$SITE_VIEWPORT|$SITE_SCALE|index.html?page=settings&lang=$lang"
   done
 }
 
@@ -84,7 +89,7 @@ if [[ "$MODE" == "check" ]]; then
   missing=0
   total=0
   for plan in plan_readme plan_site; do
-    while IFS='|' read -r dir name _size _path; do
+    while IFS='|' read -r dir name _size _scale _path; do
       total=$((total + 1))
       file="$ROOT/$dir/$name.png"
       bytes=$(stat -c %s "$file" 2>/dev/null || echo 0)
@@ -159,9 +164,13 @@ fi
 SHOT_DIR="$README_OUT"
 
 shoot() {
-  local name="$1" size="$2" path="$3"
+  local name="$1" size="$2" scale="$3" path="$4"
   local out="$SHOT_DIR/$name.png"
-  echo "› $(basename "$SHOT_DIR")/$name.png ($size)"
+  local scale_flag=()
+  if [[ "${scale:-1}" != "1" ]]; then
+    scale_flag=(--force-device-scale-factor="$scale")
+  fi
+  echo "› $(basename "$SHOT_DIR")/$name.png ($size${scale:+ ×$scale})"
   local attempt bytes
   # 无头 Chrome 偶尔加载不完 CanvasKit 会截出残图，重试两次
   for attempt in 1 2 3; do
@@ -169,7 +178,7 @@ shoot() {
       --headless=new --no-sandbox --hide-scrollbars \
       --no-first-run --no-default-browser-check \
       --user-data-dir="$PROFILE_DIR/$(basename "$SHOT_DIR")-$name" \
-      --window-size="$size" --virtual-time-budget=60000 \
+      --window-size="$size" "${scale_flag[@]}" --virtual-time-budget=60000 \
       --screenshot="$(win_path "$out")" \
       "$URL/$path" </dev/null >/dev/null 2>&1 || true
     bytes=$(stat -c %s "$out" 2>/dev/null || echo 0)
@@ -185,15 +194,15 @@ shoot() {
 
 shoot_plan() {
   local plan="$1"
-  local dir name size path
+  local dir name size scale path
   # 先把清单读进数组：循环体里要起 Chrome，别让它抢走循环的 stdin
   local -a lines
   mapfile -t lines < <("$plan" </dev/null)
   for line in "${lines[@]}"; do
-    IFS='|' read -r dir name size path <<<"$line"
+    IFS='|' read -r dir name size scale path <<<"$line"
     SHOT_DIR="$ROOT/$dir"
     mkdir -p "$SHOT_DIR"
-    shoot "$name" "$size" "$path" || exit 1
+    shoot "$name" "$size" "$scale" "$path" || exit 1
   done
 }
 

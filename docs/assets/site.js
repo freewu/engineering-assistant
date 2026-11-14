@@ -561,19 +561,18 @@
       const name = tool.name[lang] || tool.name[FALLBACK_LANG];
       const tag = tool.tag[lang] || tool.tag[FALLBACK_LANG];
       return `
-        <a class="tool" data-shot="${tool.id}" href="${shotUrl(tool.id)}">
-          <span class="tool-shot">
+        <a class="tool" data-shot="${tool.id}" href="${shotUrl(tool.id)}"
+           title="${escapeAttr(name)}">
+          <span class="phone">
             <img data-shot="${tool.id}" src="${shotUrl(tool.id)}"
-                 alt="${escapeAttr(name)}" width="1440" height="900" loading="lazy" />
-          </span>
-          <span class="tool-body">
-            <span class="glyph" data-accent="${index % 6}" aria-hidden="true">${
+                 alt="${escapeAttr(name)}" width="390" height="844" loading="lazy" />
+            <span class="badge" data-accent="${index % 6}" aria-hidden="true">${
               tool.icon
             }</span>
-            <span class="tool-name">
-              <strong>${escapeHtml(name)}</strong>
-              <span>${escapeHtml(tag)}</span>
-            </span>
+          </span>
+          <span class="tool-name">
+            <strong>${escapeHtml(name)}</strong>
+            <span>${escapeHtml(tag)}</span>
           </span>
         </a>`;
     }).join('');
